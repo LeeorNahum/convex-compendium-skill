@@ -60,11 +60,9 @@ Run `node scripts/sync.mjs`, then review the diff and check:
 
 ## Versioning
 
-Decoupled on purpose, so the version stays honest:
+`metadata.version` in `SKILL.md` is the version surface. Bump it by hand with [semver](https://semver.org/) when this skill's own authored behavior changes - patch for wording, minor for new routing or guidance, major for a renamed skill or changed scope.
 
-- `SKILL.md` `metadata.version` tracks **only this skill's own authored behavior** (routing, operating rules, structure). Bump it by hand with semver when that behavior changes - patch for wording, minor for new routing/guidance, major for renamed skill or changed scope.
-- **Upstream provenance lives in git history** - the sync commit message records the exact `get-convex/agent-skills` commit. An automated content refresh does not bump `metadata.version`; a vendor refresh is not "our" behavior change.
-- This skill is consumed as a submodule (a pinned commit), so `metadata.version` is the source of truth. GitHub releases and version badges are optional overhead and not expected here.
+Upstream provenance is separate: the sync commit message records the exact `get-convex/agent-skills` commit, and an automated content refresh does not bump `metadata.version`.
 
 ## Editing protocol
 
