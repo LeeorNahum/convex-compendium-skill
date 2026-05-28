@@ -13,29 +13,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Fetch Convex rules and convert to SKILL.md
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Vendor Convex agent skills and guidelines
+        id: sync
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/sync.mjs
+
+      - name: Verify ai-files recommendations are neutralized
         run: |
-          curl -sSL -o /tmp/convex_rules.mdc "https://convex.link/convex_rules.mdc"
-          # MDC has --- description globs --- then body. Convert to skill format.
-          awk '
-            /^---$/ { count++; next }
-            count==1 && /^description:/ { desc=$0; next }
-            count==1 { next }
-            count>=2 { body = body $0 "\n" }
-            END {
-              print "---"
-              print "name: convex-rules"
-              print desc
-              print "---"
-              print ""
-              print body
-            }
-          ' /tmp/convex_rules.mdc > SKILL.md
+          if grep -rn "ai-files install" references; then
+            echo "Found un-rewritten ai-files install recommendation" >&2
+            exit 1
+          fi
 
       - name: Commit and push if changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add SKILL.md
-          git diff --cached --quiet || git commit -m "sync: update SKILL.md from Convex convex_rules.mdc"
+          git add references
+          git diff --cached --quiet || git commit -m "sync: refresh vendored Convex skills and guidelines (get-convex/agent-skills@${{ steps.sync.outputs.upstream_sha }})"
           git push
