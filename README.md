@@ -1,7 +1,5 @@
 # convex-compendium
 
-[![GitHub Release](https://img.shields.io/github/v/release/LeeorNahum/convex-compendium-skill?sort=semver)](https://github.com/LeeorNahum/convex-compendium-skill/releases/latest)
-
 One portable [Agent Skill](https://agentskills.io) that bundles all of Convex's official AI guidance - the quickstart, auth, components, migrations, and performance workflows plus the correctness guidelines - so any AI coding agent gets everything from a single submodule.
 
 It replaces the `npx convex ai-files install` flow (which clutters a repo with per-agent skill copies and managed `AGENTS.md`/`CLAUDE.md` sections) and needs no Convex editor plugin or MCP server. The CLI plus this skill are enough.

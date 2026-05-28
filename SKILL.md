@@ -3,7 +3,7 @@ name: convex-compendium
 description: Build and maintain Convex backends in any AI coding agent - schema, queries, mutations, actions, HTTP endpoints, file storage, scheduling, auth, components, migrations, and performance. Use when writing or reviewing Convex code, scaffolding a Convex project, setting up authentication, designing a schema, building a reusable component, planning a migration, or diagnosing Convex performance.
 metadata:
   author: Leeor Nahum
-  version: "2.0.0"
+  version: "2.0.1"
 ---
 
 # Convex Compendium
