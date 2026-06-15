@@ -94,7 +94,7 @@ export default defineSchema({
     userId: v.string(),
     message: v.string(),
     read: v.boolean(),
-  }).index("by_user", ["userId"]),
+  }).index("by_user_read", ["userId", "read"]),
 });
 ```
 
@@ -129,8 +129,9 @@ export const listUnread = query({
   handler: async (ctx, args) => {
     return await ctx.db
       .query("notifications")
-      .withIndex("by_user", (q) => q.eq("userId", args.userId))
-      .filter((q) => q.eq(q.field("read"), false))
+      .withIndex("by_user_read", (q) =>
+        q.eq("userId", args.userId).eq("read", false),
+      )
       .collect();
   },
 });
@@ -206,6 +207,8 @@ Note the reference path shape: a function in
 - If the component needs pagination, use `paginator` from `convex-helpers`
   instead of built-in `.paginate()`, because `.paginate()` does not work across
   the component boundary.
+- Define indexes for queried fields instead of using Convex `.filter()` after a
+  database query.
 - Add `args` and `returns` validators to all public component functions, because
   the component boundary requires explicit type contracts.
 
@@ -261,14 +264,14 @@ export const sendNotification = mutation({
 ```ts
 // Bad: parent app table IDs are not valid component validators
 args: {
-  userId: v.id("users");
+  userId: v.id("users"),
 }
 ```
 
 ```ts
 // Good: treat parent-owned IDs as strings at the boundary
 args: {
-  userId: v.string();
+  userId: v.string(),
 }
 ```
 
