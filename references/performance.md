@@ -61,11 +61,11 @@ reference file.
 
 | Signal                                                         | Reference                                 |
 | -------------------------------------------------------------- | ----------------------------------------- |
-| High bytes or documents read, JS filtering, unnecessary joins  | `references/hot-path-rules.md`            |
-| OCC conflict errors, write contention, mutation retries        | `references/occ-conflicts.md`             |
-| High subscription count, slow UI updates, excessive re-renders | `references/subscription-cost.md`         |
-| Function timeouts, transaction size errors, large payloads     | `references/function-budget.md`           |
-| General "it's slow" with no specific signal                    | Start with `references/hot-path-rules.md` |
+| High bytes or documents read, JS filtering, unnecessary joins  | [hot-path-rules](#reference-hot-path-rules)            |
+| OCC conflict errors, write contention, mutation retries        | [occ-conflicts](#reference-occ-conflicts)             |
+| High subscription count, slow UI updates, excessive re-renders | [subscription-cost](#reference-subscription-cost)         |
+| Function timeouts, transaction size errors, large payloads     | [function-budget](#reference-function-budget)           |
+| General "it's slow" with no specific signal                    | Start with [hot-path-rules](#reference-hot-path-rules) |
 
 Multiple problem classes can overlap. Read the most relevant reference first,
 then check the others if symptoms remain.
@@ -157,13 +157,13 @@ Confirm all of these:
 
 ## Reference Files
 
-- `references/hot-path-rules.md` - Read amplification, invalidation,
+- [hot-path-rules](#reference-hot-path-rules) - Read amplification, invalidation,
   denormalization, indexes, digest tables
-- `references/occ-conflicts.md` - Write contention, OCC resolution, hot document
+- [occ-conflicts](#reference-occ-conflicts) - Write contention, OCC resolution, hot document
   splitting
-- `references/subscription-cost.md` - Reactive query cost, subscription
+- [subscription-cost](#reference-subscription-cost) - Reactive query cost, subscription
   granularity, point-in-time reads
-- `references/function-budget.md` - Execution limits, transaction size, large
+- [function-budget](#reference-function-budget) - Execution limits, transaction size, large
   documents, payload size
 
 Also check the official

@@ -64,13 +64,13 @@ Look for signals in the repo before asking:
 Read the provider's official guide and the matching local reference file:
 
 - Convex Auth: [official docs](https://docs.convex.dev/auth/convex-auth), then
-  `references/convex-auth.md`
+  [convex-auth](#reference-convex-auth)
 - Clerk: [official docs](https://docs.convex.dev/auth/clerk), then
-  `references/clerk.md`
+  [clerk](#reference-clerk)
 - WorkOS AuthKit: [official docs](https://docs.convex.dev/auth/authkit/), then
-  `references/workos-authkit.md`
+  [workos-authkit](#reference-workos-authkit)
 - Auth0: [official docs](https://docs.convex.dev/auth/auth0), then
-  `references/auth0.md`
+  [auth0](#reference-auth0)
 
 The local reference files contain the concrete workflow, expected files and env
 vars, gotchas, and validation checks.
@@ -163,10 +163,10 @@ instead.
 
 ### Provider References
 
-- `references/convex-auth.md`
-- `references/clerk.md`
-- `references/workos-authkit.md`
-- `references/auth0.md`
+- [convex-auth](#reference-convex-auth)
+- [clerk](#reference-clerk)
+- [workos-authkit](#reference-workos-authkit)
+- [auth0](#reference-auth0)
 
 ## Checklist
 

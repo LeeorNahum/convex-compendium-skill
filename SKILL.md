@@ -3,7 +3,7 @@ name: "convex-compendium"
 description: "Build and maintain Convex backends in any AI coding agent - schema, queries, mutations, actions, HTTP endpoints, file storage, scheduling, auth, components, migrations, and performance. Use when writing or reviewing Convex code, scaffolding a Convex project, setting up authentication, designing a schema, building a reusable component, planning a migration, or diagnosing Convex performance."
 metadata:
   author: "Leeor Nahum"
-  version: "2.0.2"
+  version: "2.1.0"
 ---
 
 # Convex Compendium
@@ -30,10 +30,10 @@ For any Convex code you write or review, consult `references/guidelines.md` - th
 
 - Keep `npx convex dev` running in your own terminal so generated types stay fresh. Without it, agents get stuck in linting loops over missing `_generated` types.
 - Use the Convex CLI (`npx convex ...`) for real actions: `dev`, `deploy`, `run`, `env`, `import`, `dashboard`, deployment and codegen commands. Inspect `npx convex --help` to discover the current surface.
-- This skill already bundles Convex's AI guidance. Do not run the Convex `ai-files` installer - it writes per-agent skill copies and managed `AGENTS.md`/`CLAUDE.md` sections that duplicate what is already here.
-- The Convex editor plugin / MCP server is optional and not required. The CLI plus this skill cover development and inspection without it.
-- For local development use `npx convex dev`, never `npx convex deploy` (production only).
+- Use the AI guidance already bundled in this skill instead of the Convex `ai-files` installer, which writes per-agent skill copies and managed `AGENTS.md`/`CLAUDE.md` sections that duplicate what is already here.
+- Use the CLI plus this skill for development and inspection. The Convex editor plugin and MCP server are optional extras, not requirements.
+- Use `npx convex dev` for local development. Reserve `npx convex deploy` for production only.
 
 ## Provenance
 
-The `references/` files are generated from upstream by `scripts/sync.mjs`; do not hand-edit them. The exact upstream commit is recorded in each sync commit message. To change how this skill behaves, edit this file and follow `AGENTS.md`.
+The `references/` files are generated from upstream by `scripts/sync.mjs`. Do not hand-edit them. The exact upstream commit is recorded in each sync commit message. To change how this skill behaves, edit this file and follow `AGENTS.md`.

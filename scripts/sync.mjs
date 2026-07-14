@@ -76,8 +76,25 @@ function stripFrontmatter(md) {
 function rewriteAiFiles(md) {
   return md.replace(
     /`?npx convex ai-files install`?/g,
-    "(bundled in this skill — do not run the ai-files installer)",
+    "(bundled in this skill, do not run the ai-files installer)",
   );
+}
+
+// An upstream skill's own sub-references point to sibling files under its own
+// references/ dir. Flattening merges those files into this same document as
+// "## Reference: <name>" headings, so a link to the old sibling path must
+// become an in-document anchor instead of a dangling file reference.
+function rewriteSubReferenceLinks(md, refNames) {
+  let out = md;
+  for (const name of refNames) {
+    const anchor = `#reference-${name}`;
+    out = out.replace(new RegExp(`\\(references/${name}\\.md\\)`, "g"), `(${anchor})`);
+    out = out.replace(
+      new RegExp("`references/" + name + "\\.md`", "g"),
+      `[${name}](${anchor})`,
+    );
+  }
+  return out;
 }
 
 // Drop a body's own leading H1 so it does not duplicate our provenance title.
@@ -98,7 +115,24 @@ function provenanceHeader(title, source) {
   return `${GENERATED_BANNER}\n\n# ${title}\n\n_Source: ${source}_\n\n${BUNDLED_NOTE}\n`;
 }
 
+function printHelp() {
+  console.log(`Usage: node scripts/sync.mjs
+
+Vendors Convex's upstream AI guidance into references/. Requires Node 18+ and
+network access to github.com and convex.link. Set GITHUB_TOKEN to raise the
+GitHub API rate limit. The script works without it at the anonymous rate.
+
+Writes references/<quickstart,auth,components,migrations,performance>.md and
+references/guidelines.md. Never edit those files by hand; change this script
+or the SKILL_MAP constant and re-run it.`);
+}
+
 async function main() {
+  if (process.argv.includes("--help") || process.argv.includes("-h")) {
+    printHelp();
+    return;
+  }
+
   await mkdir(REFS, { recursive: true });
 
   // Resolve the upstream commit so every raw fetch in this run is consistent.
@@ -126,11 +160,14 @@ async function main() {
       .sort();
 
     let body = stripLeadingH1(stripFrontmatter(await getText(raw(skillFile))));
+    const subNames = [];
     for (const rf of refFiles) {
       const name = path.basename(rf, ".md");
+      subNames.push(name);
       const sub = demoteHeadings((await getText(raw(rf))).trim());
       body += `\n\n---\n\n## Reference: ${name}\n\n${sub}\n`;
     }
+    body = rewriteSubReferenceLinks(body, subNames);
     body = rewriteAiFiles(body);
 
     const source = `${SKILLS_REPO}/skills/${folder}`;

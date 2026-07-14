@@ -57,10 +57,10 @@ Ask the user, then pick one path:
 
 | Goal                                              | Shape            | Reference                           |
 | ------------------------------------------------- | ---------------- | ----------------------------------- |
-| Component for this app only                       | Local            | `references/local-components.md`    |
-| Publish or share across apps                      | Packaged         | `references/packaged-components.md` |
-| User explicitly needs local + shared library code | Hybrid           | `references/hybrid-components.md`   |
-| Not sure                                          | Default to local | `references/local-components.md`    |
+| Component for this app only                       | Local            | [local-components](#reference-local-components)    |
+| Publish or share across apps                      | Packaged         | [packaged-components](#reference-packaged-components) |
+| User explicitly needs local + shared library code | Hybrid           | [hybrid-components](#reference-hybrid-components)   |
+| Not sure                                          | Default to local | [local-components](#reference-local-components)    |
 
 Read exactly one reference file before proceeding.
 
@@ -279,7 +279,7 @@ args: {
 
 For additional patterns including function handles for callbacks, deriving
 validators from schema, static configuration with a globals table, and
-class-based client wrappers, see `references/advanced-patterns.md`.
+class-based client wrappers, see [advanced-patterns](#reference-advanced-patterns).
 
 ## Validation
 
@@ -301,9 +301,9 @@ Important:
 
 Read exactly one of these after the user confirms the goal:
 
-- `references/local-components.md`
-- `references/packaged-components.md`
-- `references/hybrid-components.md`
+- [local-components](#reference-local-components)
+- [packaged-components](#reference-packaged-components)
+- [hybrid-components](#reference-hybrid-components)
 
 Official docs:
 [Authoring Components](https://docs.convex.dev/components/authoring)

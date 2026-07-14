@@ -120,13 +120,13 @@ For any non-trivial migration, use the
 component. It handles batching, cursor-based pagination, state tracking, resume
 from failure, dry runs, and progress monitoring.
 
-See `references/migrations-component.md` for installation, setup, defining and
+See [migrations-component](#reference-migrations-component) for installation, setup, defining and
 running migrations directly with `npx convex run migrations:myMigration`, dry
 runs, status monitoring, and configuration options.
 
 ## Common Migration Patterns
 
-See `references/migration-patterns.md` for complete patterns with code examples
+See [migration-patterns](#reference-migration-patterns) for complete patterns with code examples
 covering:
 
 - Adding a required field
