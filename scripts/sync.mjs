@@ -3,11 +3,12 @@
 // single submodule. Run by .github/workflows/sync-upstream.yml and locally.
 //
 // Sources (see AGENTS.md "Sources of truth"):
-//   - Task skills: github.com/get-convex/agent-skills      -> references/<task>.md
-//   - Rules body:  https://convex.link/convex_rules.txt   -> references/guidelines.md
+//   - Task skills: github.com/get-convex/agent-skills -> references/<task>.md
+//   - Rules body:  github.com/get-convex/convex-evals/runner/models/guidelines.md
+//                                                   -> references/guidelines.md
 //
-// Provenance lives in git history: the workflow records the upstream commit in
-// the sync commit message. This script never edits SKILL.md metadata.version.
+// Provenance lives in git history: the workflow records both upstream commits
+// in the sync commit message. This script never edits SKILL.md metadata.version.
 
 import { mkdir, writeFile, appendFile } from "node:fs/promises";
 import path from "node:path";
@@ -16,9 +17,11 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const REFS = path.join(ROOT, "references");
 
-const RULES_URL = "https://convex.link/convex_rules.txt";
 const SKILLS_REPO = "get-convex/agent-skills";
 const SKILLS_BRANCH = "main";
+const RULES_REPO = "get-convex/convex-evals";
+const RULES_BRANCH = "main";
+const RULES_PATH = "runner/models/guidelines.md";
 
 // Upstream skill folder -> our reference filename. The `convex` router is
 // intentionally excluded: our SKILL.md replaces its routing, and its only job
@@ -119,8 +122,9 @@ function printHelp() {
   console.log(`Usage: node scripts/sync.mjs
 
 Vendors Convex's upstream AI guidance into references/. Requires Node 18+ and
-network access to github.com and convex.link. Set GITHUB_TOKEN to raise the
-GitHub API rate limit. The script works without it at the anonymous rate.
+network access to github.com and raw.githubusercontent.com. Set GITHUB_TOKEN
+to raise the GitHub API rate limit. The script works without it at the
+anonymous rate.
 
 Writes references/<quickstart,auth,components,migrations,performance>.md and
 references/guidelines.md. Never edit those files by hand; change this script
@@ -135,16 +139,23 @@ async function main() {
 
   await mkdir(REFS, { recursive: true });
 
-  // Resolve the upstream commit so every raw fetch in this run is consistent.
-  const commit = await getJson(
-    `https://api.github.com/repos/${SKILLS_REPO}/commits/${SKILLS_BRANCH}`,
-  );
-  const sha = commit.sha;
-  const raw = (p) =>
-    `https://raw.githubusercontent.com/${SKILLS_REPO}/${sha}/${p}`;
+  // Resolve both upstream commits first so every raw fetch in this run is
+  // consistent even if either branch advances while the sync is running.
+  const [skillsCommit, rulesCommit] = await Promise.all([
+    getJson(
+      `https://api.github.com/repos/${SKILLS_REPO}/commits/${SKILLS_BRANCH}`,
+    ),
+    getJson(
+      `https://api.github.com/repos/${RULES_REPO}/commits/${RULES_BRANCH}`,
+    ),
+  ]);
+  const skillsSha = skillsCommit.sha;
+  const rulesSha = rulesCommit.sha;
+  const raw = (repo, sha, p) =>
+    `https://raw.githubusercontent.com/${repo}/${sha}/${p}`;
 
   const tree = await getJson(
-    `https://api.github.com/repos/${SKILLS_REPO}/git/trees/${sha}?recursive=1`,
+    `https://api.github.com/repos/${SKILLS_REPO}/git/trees/${skillsSha}?recursive=1`,
   );
   const paths = tree.tree.filter((t) => t.type === "blob").map((t) => t.path);
 
@@ -159,12 +170,16 @@ async function main() {
       .filter((p) => p.startsWith(`skills/${folder}/references/`) && p.endsWith(".md"))
       .sort();
 
-    let body = stripLeadingH1(stripFrontmatter(await getText(raw(skillFile))));
+    let body = stripLeadingH1(
+      stripFrontmatter(await getText(raw(SKILLS_REPO, skillsSha, skillFile))),
+    );
     const subNames = [];
     for (const rf of refFiles) {
       const name = path.basename(rf, ".md");
       subNames.push(name);
-      const sub = demoteHeadings((await getText(raw(rf))).trim());
+      const sub = demoteHeadings(
+        (await getText(raw(SKILLS_REPO, skillsSha, rf))).trim(),
+      );
       body += `\n\n---\n\n## Reference: ${name}\n\n${sub}\n`;
     }
     body = rewriteSubReferenceLinks(body, subNames);
@@ -183,19 +198,26 @@ async function main() {
     console.log(`wrote references/${outName}.md (from ${folder})`);
   }
 
-  // 2) Rules body -> guidelines.md
-  const rulesBody = await getText(RULES_URL);
+  // 2) Canonical rules source -> guidelines.md. Convex's release builder reads
+  // this file unchanged to produce convex_rules.txt, so fetching it directly
+  // avoids depending on release asset publication.
+  const rulesSource = `${RULES_REPO}/${RULES_PATH}`;
+  const rulesBody = await getText(raw(RULES_REPO, rulesSha, RULES_PATH));
   await writeFile(
     path.join(REFS, "guidelines.md"),
-    `${provenanceHeader("Convex Guidelines", RULES_URL)}\n${rulesBody.trim()}\n`,
+    `${provenanceHeader("Convex Guidelines", rulesSource)}\n${rulesBody.trim()}\n`,
     "utf8",
   );
   console.log("wrote references/guidelines.md");
 
-  // Hand the exact upstream commit to the workflow for the commit message.
-  console.log(`upstream get-convex/agent-skills @ ${sha}`);
+  // Hand both exact upstream commits to the workflow for the commit message.
+  console.log(`upstream ${SKILLS_REPO} @ ${skillsSha}`);
+  console.log(`upstream ${RULES_REPO} @ ${rulesSha}`);
   if (process.env.GITHUB_OUTPUT) {
-    await appendFile(process.env.GITHUB_OUTPUT, `upstream_sha=${sha}\n`);
+    await appendFile(
+      process.env.GITHUB_OUTPUT,
+      `agent_skills_sha=${skillsSha}\nrules_sha=${rulesSha}\n`,
+    );
   }
 }
 

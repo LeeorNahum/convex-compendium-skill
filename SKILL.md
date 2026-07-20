@@ -3,7 +3,7 @@ name: "convex-compendium"
 description: "Build and maintain Convex backends in any AI coding agent - schema, queries, mutations, actions, HTTP endpoints, file storage, scheduling, auth, components, migrations, and performance. Use when writing or reviewing Convex code, scaffolding a Convex project, setting up authentication, designing a schema, building a reusable component, planning a migration, or diagnosing Convex performance."
 metadata:
   author: "Leeor Nahum"
-  version: "2.1.0"
+  version: "2.1.1"
 ---
 
 # Convex Compendium
@@ -36,4 +36,4 @@ For any Convex code you write or review, consult `references/guidelines.md` - th
 
 ## Provenance
 
-The `references/` files are generated from upstream by `scripts/sync.mjs`. Do not hand-edit them. The exact upstream commit is recorded in each sync commit message. To change how this skill behaves, edit this file and follow `AGENTS.md`.
+The `references/` files are generated from upstream by `scripts/sync.mjs`. Do not hand-edit them. The exact upstream revisions are recorded in each sync commit message. To change how this skill behaves, edit this file and follow `AGENTS.md`.

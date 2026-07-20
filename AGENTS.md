@@ -16,7 +16,7 @@ It deliberately replaces the Convex `ai-files` install flow. Consumers get every
 | `references/<task>.md` | One flattened task workflow per file (quickstart, auth, components, migrations, performance). | `scripts/sync.mjs` (generated) |
 | `references/guidelines.md` | Foundational Convex correctness rules. | `scripts/sync.mjs` (generated) |
 | `scripts/sync.mjs` | The only place that knows how to fetch and transform upstream content. | Hand |
-| `.github/workflows/sync-upstream.yml` | Runs the sync on a schedule and on demand. Records the upstream commit in the commit message. | Hand |
+| `.github/workflows/sync-upstream.yml` | Runs the sync on a schedule and on demand. Records both upstream commits in the commit message. | Hand |
 | `.gitattributes` | Forces LF so Windows-local and Linux-CI runs never disagree. | Hand |
 | `README.md` | Short human skim layer: value + install. | Hand |
 | `AGENTS.md` | This file. Maintenance contract. | Hand |
@@ -30,11 +30,11 @@ The skill vendors from exactly two upstream sources. There is no third source, a
 | Source | URL | Lands in |
 | --- | --- | --- |
 | Convex agent skills | `https://github.com/get-convex/agent-skills` (folder `skills/`) | `references/<task>.md` |
-| Convex rules body | `https://convex.link/convex_rules.txt` | `references/guidelines.md` |
+| Convex rules body | `https://github.com/get-convex/convex-evals/blob/main/runner/models/guidelines.md` | `references/guidelines.md` |
 
 Context worth remembering:
 
-- The rules body is one canonical text, repackaged per IDE elsewhere (`convex_rules.mdc` for Cursor with `description`/`globs` frontmatter, `convex.instructions.md` for Copilot with `applyTo`, managed sections in `AGENTS.md`/`CLAUDE.md`, `guidelines.md` via the CLI). We pull the plain `.txt` because it carries no agent-specific wrapper. The `.mdc` is not obsolete - it is just the Cursor-flavored wrapper, which we do not want.
+- The rules body is one canonical text in `get-convex/convex-evals/runner/models/guidelines.md`. Convex's release builder repackages it per IDE as `convex_rules.txt`, `convex_rules.mdc` for Cursor with `description`/`globs` frontmatter, `convex.instructions.md` for Copilot with `applyTo`, and managed sections in `AGENTS.md`/`CLAUDE.md`. We pull the canonical Markdown source directly because the plain release asset is written from it unchanged, while release publication can fail independently. The `.mdc` is not obsolete. It is the Cursor-flavored wrapper, which we do not want.
 - Rules and skills are complementary, not redundant. The task skills are on-demand workflows. The rules body is always-on correctness knowledge they assume exists. The upstream `convex` router skill does not contain the rules body. It points to them instead, so we bundle both: the task skills plus guidelines.
 - The upstream `convex` router skill is intentionally excluded. Its only job is to recommend `npx convex ai-files install`, which is exactly what this skill exists to avoid. `SKILL.md` provides the routing instead.
 
@@ -42,10 +42,11 @@ Context worth remembering:
 
 `scripts/sync.mjs` (run by the workflow and runnable locally with `node scripts/sync.mjs`):
 
-1. Resolves the latest `get-convex/agent-skills` commit, then for each mapped skill flattens its `SKILL.md` + `references/*.md` into one `references/<task>.md`: strips the upstream YAML frontmatter and leading H1, demotes sub-reference headings, and neutralizes every `ai-files install` recommendation.
-2. Downloads the rules body to `references/guidelines.md` with a provenance header.
-3. Prints the exact upstream commit and writes it to `GITHUB_OUTPUT`. The workflow puts it in the sync commit message. Provenance lives in git history, not a tracked manifest file.
-4. Never touches `SKILL.md` `metadata.version`.
+1. Resolves the latest commits of both `get-convex/agent-skills` and `get-convex/convex-evals` before downloading anything, so every file in one run comes from a fixed upstream snapshot.
+2. For each mapped agent skill, flattens its `SKILL.md` + `references/*.md` into one `references/<task>.md`. It strips the upstream YAML frontmatter and leading H1, demotes sub-reference headings, rewrites flattened sub-reference links, and neutralizes every `ai-files install` recommendation.
+3. Downloads the canonical `convex-evals/runner/models/guidelines.md` rules body to `references/guidelines.md` with a provenance header.
+4. Prints both exact upstream commits and writes them to `GITHUB_OUTPUT`. The workflow puts them in the sync commit message. Provenance lives in git history, not a tracked manifest file.
+5. Never touches `SKILL.md` `metadata.version`.
 
 The skill-to-file mapping lives in the `SKILL_MAP` constant in `scripts/sync.mjs`. Generated reference headers carry the source path but no commit SHA, so a reference only changes when its actual content changes.
 
@@ -56,13 +57,13 @@ Run `node scripts/sync.mjs`, then review the diff and check:
 - **`references/` content changed**: normal refresh. Confirm the `ai-files install` rewrite still caught everything (`rg "ai-files install" references` must return nothing) and headings still nest cleanly.
 - **A skill was added upstream** (new folder under `skills/`): add it to `SKILL_MAP` in `scripts/sync.mjs`, add a routing line to `SKILL.md`, and mention it in `README.md`.
 - **A skill was renamed or removed upstream**: update `SKILL_MAP`, delete the stale `references/<task>.md`, and update `SKILL.md` routing.
-- **The rules `.txt` URL or format changed**: update the `RULES_URL` constant and re-verify `references/guidelines.md`.
+- **The canonical rules path or format changed**: update `RULES_PATH` in `scripts/sync.mjs`, verify Convex's release builder still emits the same body, and re-check `references/guidelines.md`.
 
 ## Versioning
 
 `metadata.version` in `SKILL.md` is the version surface. Bump it by hand with [semver](https://semver.org/) when this skill's own authored behavior changes - patch for wording, minor for new routing or guidance, major for a renamed skill or changed scope.
 
-Upstream provenance is separate: the sync commit message records the exact `get-convex/agent-skills` commit, and an automated content refresh does not bump `metadata.version`.
+Upstream provenance is separate: the sync commit message records the exact `get-convex/agent-skills` and `get-convex/convex-evals` commits, and an automated content refresh does not bump `metadata.version`.
 
 ## Editing protocol
 

@@ -26,4 +26,4 @@ Then keep `npx convex dev` running in a terminal so generated types stay fresh.
 
 ## Stays up to date
 
-The `references/` are vendored from Convex's official sources ([get-convex/agent-skills](https://github.com/get-convex/agent-skills) and `convex_rules.txt`) by `scripts/sync.mjs`, run weekly and on demand via **Actions → Sync upstream from Convex**. Each sync commit records the exact upstream commit. Maintenance rules live in `AGENTS.md`.
+The `references/` are vendored from Convex's official sources ([get-convex/agent-skills](https://github.com/get-convex/agent-skills) and the canonical [convex-evals guidelines](https://github.com/get-convex/convex-evals/blob/main/runner/models/guidelines.md)) by `scripts/sync.mjs`, run weekly and on demand via **Actions → Sync upstream from Convex**. Each sync commit records both exact upstream commits. Maintenance rules live in `AGENTS.md`.
