@@ -1,90 +1,124 @@
-# AGENTS.md
+# Convex Compendium Maintenance
 
-Rules for maintaining the **convex-compendium** skill. This is the living source of truth for what the skill is, where its content comes from, and how to update it. User-facing guidance lives in `SKILL.md` and `references/`. This file governs the repo itself.
+This file governs the `convex-compendium` repository. User-facing operating guidance lives in `SKILL.md` and generated `references/`.
 
-## What this skill is
+## Purpose
 
-A single, portable agent skill that bundles all of Convex's official AI guidance into one submodule so it works the same across every agent (Cursor, Claude Code, Codex, opencode, Copilot, ...). It follows the open Agent Skills standard: one `SKILL.md` at the repo root plus progressive-disclosure `references/`.
+Convex Compendium is one portable Agent Skill that bundles Convex's task-specific AI guidance and canonical correctness guidelines. Consumers install one submodule. They do not need duplicate per-agent skill copies, managed instruction blocks, an editor plugin, or an MCP server.
 
-It deliberately replaces the Convex `ai-files` install flow. Consumers get everything by submoduling this repo. They do not run `npx convex ai-files install`, and they do not need the Convex editor plugin / MCP server.
+## File Ownership
 
-## File roles
+| Path                                  | Role                                                                            | Owner              |
+| ------------------------------------- | ------------------------------------------------------------------------------- | ------------------ |
+| `SKILL.md`                            | Trigger, source precedence, task routing, and universal workflow                | Hand-authored      |
+| `references/*.md`                     | Flattened Convex task workflows and canonical guidelines                        | `scripts/sync.mjs` |
+| `references/source-manifest.json`     | Stable source, license, blob, and content provenance                            | `scripts/sync.mjs` |
+| `scripts/sync.mjs`                    | Source discovery, validation, transformation, comparison, and atomic generation | Hand-authored      |
+| `scripts/sync.test.mjs`               | Deterministic synchronizer tests                                                | Hand-authored      |
+| `scripts/evals.test.mjs`              | Eval manifest and fixture validation                                            | Hand-authored      |
+| `evals/trigger-queries.json`          | Trigger and near-miss cases                                                     | Hand-authored      |
+| `evals/evals.json` and `evals/files/` | Workflow cases and input fixtures                                               | Hand-authored      |
+| `.github/workflows/sync-upstream.yml` | Scheduled source refresh and verification                                       | Hand-authored      |
+| `README.md`                           | Concise human overview                                                          | Hand-authored      |
+| `.gitattributes`                      | LF normalization                                                                | Hand-authored      |
+| `AGENTS.md`                           | This maintenance contract                                                       | Hand-authored      |
 
-| Path | Role | Edited by |
-| --- | --- | --- |
-| `SKILL.md` | Router: routes to task references, points to guidelines, operating rules. Owns `metadata.version`. | Hand |
-| `references/<task>.md` | One flattened task workflow per file (quickstart, auth, components, migrations, performance). | `scripts/sync.mjs` (generated) |
-| `references/guidelines.md` | Foundational Convex correctness rules. | `scripts/sync.mjs` (generated) |
-| `scripts/sync.mjs` | The only place that knows how to fetch and transform upstream content. | Hand |
-| `.github/workflows/sync-upstream.yml` | Runs the sync on a schedule and on demand. Records both upstream commits in the commit message. | Hand |
-| `.gitattributes` | Forces LF so Windows-local and Linux-CI runs never disagree. | Hand |
-| `README.md` | Short human skim layer: value + install. | Hand |
-| `AGENTS.md` | This file. Maintenance contract. | Hand |
+Never hand-edit a generated reference. Fix the synchronizer and regenerate the complete set.
 
-One owner per concern. Never hand-edit a generated file. Change `scripts/sync.mjs` and re-run it.
+## Sources and Precedence
 
-## Sources of truth
+The skill vendors exactly two first-party source repositories:
 
-The skill vendors from exactly two upstream sources. There is no third source, and the Convex MCP/plugin is never a source. The agent-skills repo is the primary, actively-developed source. The rules text is the smaller, foundational layer.
+| Source                                                                | Content                          | Destination                                                         | License observation                     |
+| --------------------------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------- | --------------------------------------- |
+| [get-convex/agent-skills](https://github.com/get-convex/agent-skills) | Five task skills under `skills/` | `references/{quickstart,auth,components,migrations,performance}.md` | No explicit repository license detected |
+| [get-convex/convex-evals](https://github.com/get-convex/convex-evals) | `runner/models/guidelines.md`    | `references/guidelines.md`                                          | Apache-2.0                              |
 
-| Source | URL | Lands in |
-| --- | --- | --- |
-| Convex agent skills | `https://github.com/get-convex/agent-skills` (folder `skills/`) | `references/<task>.md` |
-| Convex rules body | `https://github.com/get-convex/convex-evals/blob/main/runner/models/guidelines.md` | `references/guidelines.md` |
+The absent detected license on `get-convex/agent-skills` is an accepted observation for this repository's small self-contained vendored task model. Record and report it. Do not silently reinterpret it as a license grant. Fail if `get-convex/convex-evals` no longer reports Apache-2.0 because that changes the known redistribution basis for the canonical guidelines.
 
-Context worth remembering:
+At use time, `SKILL.md` gives installed package contracts and the target repository precedence over bundled guidance. Moving upstream branches are discovery sources, not proof that released packages expose an API.
 
-- The rules body is one canonical text in `get-convex/convex-evals/runner/models/guidelines.md`. Convex's release builder repackages it per IDE as `convex_rules.txt`, `convex_rules.mdc` for Cursor with `description`/`globs` frontmatter, `convex.instructions.md` for Copilot with `applyTo`, and managed sections in `AGENTS.md`/`CLAUDE.md`. We pull the canonical Markdown source directly because the plain release asset is written from it unchanged, while release publication can fail independently. The `.mdc` is not obsolete. It is the Cursor-flavored wrapper, which we do not want.
-- Rules and skills are complementary, not redundant. The task skills are on-demand workflows. The rules body is always-on correctness knowledge they assume exists. The upstream `convex` router skill does not contain the rules body. It points to them instead, so we bundle both: the task skills plus guidelines.
-- The upstream `convex` router skill is intentionally excluded. Its only job is to recommend `npx convex ai-files install`, which is exactly what this skill exists to avoid. `SKILL.md` provides the routing instead.
+## Closed Task Mapping
 
-## How sync works
+`scripts/sync.mjs` maps exactly:
 
-`scripts/sync.mjs` (run by the workflow and runnable locally with `node scripts/sync.mjs`):
+- `convex-quickstart` to `quickstart.md`
+- `convex-setup-auth` to `auth.md`
+- `convex-create-component` to `components.md`
+- `convex-migration-helper` to `migrations.md`
+- `convex-performance-audit` to `performance.md`
 
-1. Resolves the latest commits of both `get-convex/agent-skills` and `get-convex/convex-evals` before downloading anything, so every file in one run comes from a fixed upstream snapshot.
-2. For each mapped agent skill, flattens its `SKILL.md` + `references/*.md` into one `references/<task>.md`. It strips the upstream YAML frontmatter and leading H1, demotes sub-reference headings, rewrites flattened sub-reference links, and neutralizes every `ai-files install` recommendation.
-3. Downloads the canonical `convex-evals/runner/models/guidelines.md` rules body to `references/guidelines.md` with a provenance header.
-4. Prints both exact upstream commits and writes them to `GITHUB_OUTPUT`. The workflow puts them in the sync commit message. Provenance lives in git history, not a tracked manifest file.
-5. Never touches `SKILL.md` `metadata.version`.
+The upstream `convex` router is deliberately excluded because this skill owns routing and already bundles the material that router installs.
 
-The skill-to-file mapping lives in the `SKILL_MAP` constant in `scripts/sync.mjs`. Generated reference headers carry the source path but no commit SHA, so a reference only changes when its actual content changes.
+Synchronization fails when a mapped task or excluded router disappears, a new `convex-*` task appears without a decision, a tree is truncated, a source path becomes nested unexpectedly, frontmatter no longer matches its folder, links cannot be flattened, or canonical guideline structure drifts.
 
-## When upstream changes - what to check
+## Synchronization Contract
 
-Run `node scripts/sync.mjs`, then review the diff and check:
+Run from this repository:
 
-- **`references/` content changed**: normal refresh. Confirm the `ai-files install` rewrite still caught everything (`rg "ai-files install" references` must return nothing) and headings still nest cleanly.
-- **A skill was added upstream** (new folder under `skills/`): add it to `SKILL_MAP` in `scripts/sync.mjs`, add a routing line to `SKILL.md`, and mention it in `README.md`.
-- **A skill was renamed or removed upstream**: update `SKILL_MAP`, delete the stale `references/<task>.md`, and update `SKILL.md` routing.
-- **The canonical rules path or format changed**: update `RULES_PATH` in `scripts/sync.mjs`, verify Convex's release builder still emits the same body, and re-check `references/guidelines.md`.
+```text
+node scripts/sync.mjs
+node scripts/sync.mjs --check
+node scripts/sync.mjs --help
+```
+
+The script can pin both repositories with full SHAs. It resolves both revisions before fetching bodies, validates final HTTPS hosts, fetches every required source, transforms all output in memory, validates the complete set, then replaces `references/` atomically. A failed fetch or transform must leave disk unchanged.
+
+Generated Markdown receives a source banner and stable source link without a moving commit SHA. `source-manifest.json` records repository metadata, license observations, task mapping, the guidelines' declared Convex range, every source path and blob SHA, source content hashes, output hashes, and output-to-source relationships. Exact resolved repository commits belong in command output and refresh commit messages.
+
+`--check` performs no writes. It reports missing, changed, and stale generated files separately. Normal generation refuses to delete an unrecognized hand-authored reference.
+
+The transform flattens direct `references/*.md` files, namespaces their anchors, rewrites local links, preserves fenced code structure, removes duplicate document H1s, and neutralizes executable installer guidance. The final output must contain no executable `convex ai-files install` command.
+
+Automated source refreshes never edit `SKILL.md` or change `metadata.version`.
+
+## Evaluations
+
+Trigger cases test direct Convex requests, repository signals, and nearby non-Convex tasks. Workflow cases use small fixtures to test durable behavior such as installed-version inspection, trusted identity, function boundaries, indexes, migrations, webhooks, OCC design, component isolation, and runtime validation.
+
+Run structural tests locally and in automation. Model-based with-skill and baseline runs are explicit evaluation work. Do not run or commit token-heavy eval workspaces, transcripts, grading output, timing files, or benchmark files as part of a normal source refresh.
 
 ## Versioning
 
-`metadata.version` in `SKILL.md` is the version surface. Bump it by hand with [semver](https://semver.org/) when this skill's own authored behavior changes - patch for wording, minor for new routing or guidance, major for a renamed skill or changed scope.
+`metadata.version` in `SKILL.md` follows Semantic Versioning:
 
-Upstream provenance is separate: the sync commit message records the exact `get-convex/agent-skills` and `get-convex/convex-evals` commits, and an automated content refresh does not bump `metadata.version`.
+- Patch for wording corrections and narrow clarifications
+- Minor for new guidance, wider triggering, new task routing, or maintenance behavior
+- Major for renamed scope or incompatible skill behavior
 
-## Editing protocol
+A source-only refresh does not change the skill version. Authored behavior changes and their generated outputs ship together at one appropriate version.
 
-- Ask before touching each hand-edited file, and pause for review between files.
-- Encode defaults only when backed by usage or explicit user preference.
-- Prefer deletion over caveats.
-- Before committing, inspect repo state, run available checks (`node scripts/sync.mjs` to confirm a clean generation, lint/format if configured), and confirm. Do not commit a state where generated files disagree with the script.
+## Wording and Scope
 
-## Wording and boundaries
+- Keep the skill generic across Convex projects and agents.
+- Keep user-facing guidance in `SKILL.md` and conditional references.
+- Keep maintenance instructions here.
+- State contracts and real boundaries without enumerating obvious instances.
+- Preserve upstream prose in generated references except for documented bundling transforms.
+- Quote every string value in `SKILL.md` frontmatter.
+- Use capitalized parallel bullets in hand-authored files.
+- Do not write em dashes or use semicolons as prose joiners in hand-authored files.
+- Keep every support reference directly reachable from `SKILL.md`.
 
-- **Generic and portable**: no agent-specific assumptions baked into `SKILL.md` or references, no personal paths, no machine-specific context. Convex proper nouns are fine because this skill is scoped to Convex.
-- **Positive rules**: state what to do. Describe mistake categories (for example, "do not run the ai-files installer") rather than anchoring to one user's setup.
-- **Progressive disclosure**: `SKILL.md` says exactly when to read each reference. A reference that `SKILL.md` never points to is bloat.
-- **No meta leakage**: keep planning residue and conversational context out of `SKILL.md` and `references/`.
-- **Quoted frontmatter**: quote every frontmatter string value in `SKILL.md`. Keys stay unquoted.
-- **No em dashes, no joiner semicolons**: in hand-edited files only. Generated `references/` files keep upstream styling verbatim.
-- **Capitalized bullets**: parallel list voice throughout hand-edited files.
+## Finishing Checks
 
-## Before finishing
+Run:
 
-- `rg "ai-files install" references` returns nothing.
-- Every `references/` file is reachable from a routing line in `SKILL.md`.
-- `metadata.version` bumped if and only if this skill's authored behavior changed.
-- `README.md` still matches the install path and skill list.
+```text
+node --check scripts/sync.mjs
+node --test scripts/sync.test.mjs scripts/evals.test.mjs
+node scripts/sync.mjs
+node scripts/sync.mjs --check
+node ../skill-forge/scripts/validate.mjs .
+git diff --check
+```
+
+Also confirm:
+
+- A second generation produces no changes.
+- Every generated output and source has a stable hash in `source-manifest.json`.
+- No executable installer command remains in `references/`.
+- Every reference is routed directly from `SKILL.md`.
+- `metadata.version` changed if and only if authored behavior changed.
+- `README.md`, the workflow, tests, and generated ownership still agree.
+- Only intended files are modified before any commit.

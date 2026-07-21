@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "packageManager": "npm@10.8.2",
+  "dependencies": {
+    "convex": "1.18.2"
+  }
+}

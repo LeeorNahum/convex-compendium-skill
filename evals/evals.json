@@ -1,0 +1,138 @@
+{
+  "skill_name": "convex-compendium",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Review this Convex message listing path. It becomes slow as channels grow and sometimes returns too much data.",
+      "expected_output": "A repository-aware schema and query repair using a correctly ordered index plus bounded results, with generated types and runtime validation refreshed.",
+      "files": [
+        "evals/files/schema-index/package.json",
+        "evals/files/schema-index/convex/schema.ts",
+        "evals/files/schema-index/convex/messages.ts"
+      ],
+      "assertions": [
+        "The agent records the installed Convex version and inspects the schema before editing",
+        "The query uses an index whose declared field order matches its equality and ordering constraints",
+        "The unbounded collect is replaced with pagination or a justified technical bound",
+        "The response contract remains appropriate for the caller",
+        "Validation regenerates Convex types and exercises the query through the project"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Repair this document update mutation so callers cannot edit another user's records by changing ownerId.",
+      "expected_output": "A backend authorization repair that derives trusted Convex identity, maps it to application ownership, and distinguishes unauthenticated from forbidden access.",
+      "files": [
+        "evals/files/trusted-identity/package.json",
+        "evals/files/trusted-identity/convex/auth.config.ts",
+        "evals/files/trusted-identity/convex/documents.ts"
+      ],
+      "assertions": [
+        "The submitted ownerId is not treated as proof of authorization",
+        "Identity is derived through the installed Convex backend auth contract",
+        "Resource ownership is checked where the mutation executes",
+        "Unauthenticated and forbidden states remain distinguishable",
+        "Tests or direct function validation cover another user's document"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Fix the Convex function boundaries in this job runner. It needs an external API call and then a database update.",
+      "expected_output": "A correctly separated action and internal mutation, with deterministic reads, generated internal references, validation, and explicit failure behavior.",
+      "files": [
+        "evals/files/function-boundaries/package.json",
+        "evals/files/function-boundaries/convex/jobs.ts"
+      ],
+      "assertions": [
+        "The external request runs in an action rather than a query or mutation",
+        "The action does not access ctx.db",
+        "Database changes run through an internal mutation referenced from generated internal APIs",
+        "Function arguments and returned data are validated according to the installed version",
+        "The design states what happens when the external request succeeds but persistence fails"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Harden this Convex HTTP webhook against forged, duplicate, delayed, and out-of-order deliveries.",
+      "expected_output": "An HTTP action that verifies the raw request before trusting fields and commits idempotently through an internal mutation with ordering protection.",
+      "files": [
+        "evals/files/webhook/package.json",
+        "evals/files/webhook/convex/http.ts"
+      ],
+      "assertions": [
+        "The signature is verified before parsed fields are trusted",
+        "The secret remains in the Convex server environment",
+        "Persistence occurs through an internal function rather than a public mutation",
+        "Duplicate event identifiers are idempotent",
+        "An older delivery cannot overwrite newer synchronized state"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Add a required handle field and an index to this populated Convex accounts table without breaking old and new code during deployment.",
+      "expected_output": "A staged widen, migrate, index, and narrow rollout that remains compatible between deployments and verifies completion before enforcing the final schema.",
+      "files": [
+        "evals/files/staged-migration/package.json",
+        "evals/files/staged-migration/convex/schema.ts",
+        "evals/files/staged-migration/convex/accounts.ts"
+      ],
+      "assertions": [
+        "The agent reads the migration workflow before proposing the rollout",
+        "The first schema state accepts existing documents",
+        "Backfill work is restartable and bounded",
+        "The index rollout is staged according to the installed Convex capabilities",
+        "The field becomes required only after data and callers are verified"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Convex reports repeated OCC conflicts when presence changes in busy rooms. Repair the data model and inspect sibling writers.",
+      "expected_output": "A measured contention repair that isolates high-churn state from widely read room data and updates all relevant readers and writers consistently.",
+      "files": [
+        "evals/files/occ-hotspot/package.json",
+        "evals/files/occ-hotspot/convex/presence.ts"
+      ],
+      "assertions": [
+        "The agent treats the OCC signal as a concrete write-contention problem",
+        "Frequently updated presence is isolated from the shared room document",
+        "The repair avoids a new single hot aggregate document",
+        "Sibling readers and writers touching the same state are identified",
+        "Behavior and contention are revalidated after the change"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Turn this backend folder into a reusable Convex component without leaking application auth, environment variables, or generated app functions into it.",
+      "expected_output": "An isolated component contract with component-owned schema and functions, explicit configuration, and application wrappers for auth and public exposure.",
+      "files": [
+        "evals/files/component-isolation/package.json",
+        "evals/files/component-isolation/component/convex.config.ts",
+        "evals/files/component-isolation/component/convex/messages.ts"
+      ],
+      "assertions": [
+        "The agent loads the component workflow and inspects the installed component APIs",
+        "The component no longer imports the application's generated api",
+        "Application identity and configuration enter through explicit component arguments or wrappers",
+        "Component functions use component-owned generated references and storage",
+        "The application controls which component operations become public"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Upgrade this older Convex backend safely. Do not assume the current guidelines match its installed package or generated files.",
+      "expected_output": "A version-aware migration that inventories the exact installed package and generated contract, verifies supported replacement syntax, makes bounded changes, and validates development behavior.",
+      "files": [
+        "evals/files/legacy-upgrade/package.json",
+        "evals/files/legacy-upgrade/convex/messages.ts",
+        "evals/files/legacy-upgrade/convex/_generated/server.d.ts"
+      ],
+      "assertions": [
+        "The exact installed Convex version is recorded before editing",
+        "Installed types or matching released material confirm replacement APIs",
+        "Moving upstream source is not treated as proof of released behavior",
+        "Generated files are regenerated rather than hand-edited",
+        "Validation covers typechecking and a one-shot development deployment check"
+      ]
+    }
+  ]
+}

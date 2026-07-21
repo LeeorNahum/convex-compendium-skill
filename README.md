@@ -1,29 +1,32 @@
 # convex-compendium
 
-One portable [Agent Skill](https://agentskills.io) that bundles all of Convex's official AI guidance - the quickstart, auth, components, migrations, and performance workflows plus the correctness guidelines - so any AI coding agent gets everything from a single submodule.
-
-It replaces the `npx convex ai-files install` flow (which clutters a repo with per-agent skill copies and managed `AGENTS.md`/`CLAUDE.md` sections) and needs no Convex editor plugin or MCP server. The CLI plus this skill are enough.
+A portable [Agent Skill](https://agentskills.io) that bundles Convex's official task workflows and canonical correctness guidelines for consistent use across coding agents.
 
 ## Install
-
-Add as a submodule into your agent's skills directory:
 
 ```bash
 git submodule add https://github.com/LeeorNahum/convex-compendium-skill.git .agents/skills/convex-compendium
 ```
 
-`.agents/skills/` is read by Cursor, Claude Code, Codex, and other agents. Keep your own personal skills in the sibling `.cursor/skills/` directory so they never collide with this submodule.
+The skill is self-contained. It does not require duplicate AI-file installation, managed instruction blocks, an editor plugin, or an MCP server.
 
-Then keep `npx convex dev` running in a terminal so generated types stay fresh.
+## Contents
 
-## What's inside
+| Path                              | Purpose                                                                                 |
+| --------------------------------- | --------------------------------------------------------------------------------------- |
+| `SKILL.md`                        | Trigger, repository-first workflow, source precedence, and task routing                 |
+| `references/*.md`                 | Generated quickstart, auth, component, migration, performance, and correctness guidance |
+| `references/source-manifest.json` | Stable source, license, blob, and content provenance                                    |
+| `scripts/sync.mjs`                | Deterministic upstream synchronization with no-write checking                           |
+| `scripts/*.test.mjs`              | Synchronizer and eval-structure tests                                                   |
+| `evals/`                          | Trigger cases and fixture-backed workflow evaluations                                   |
 
-| File | Purpose |
-| --- | --- |
-| `SKILL.md` | Router: load the matching task reference, with guidelines underpinning all Convex code |
-| `references/{quickstart,auth,components,migrations,performance}.md` | Task workflows (from get-convex/agent-skills) |
-| `references/guidelines.md` | Foundational Convex correctness rules |
+## Refresh and Validate
 
-## Stays up to date
+```bash
+node scripts/sync.mjs
+node scripts/sync.mjs --check
+node --test scripts/sync.test.mjs scripts/evals.test.mjs
+```
 
-The `references/` are vendored from Convex's official sources ([get-convex/agent-skills](https://github.com/get-convex/agent-skills) and the canonical [convex-evals guidelines](https://github.com/get-convex/convex-evals/blob/main/runner/models/guidelines.md)) by `scripts/sync.mjs`, run weekly and on demand via **Actions → Sync upstream from Convex**. Each sync commit records both exact upstream commits. Maintenance rules live in `AGENTS.md`.
+Generated references come from [get-convex/agent-skills](https://github.com/get-convex/agent-skills) and the canonical [convex-evals guidelines](https://github.com/get-convex/convex-evals/blob/main/runner/models/guidelines.md). The task repository has no explicit detected license. The guidelines repository reports Apache-2.0. Exact source revisions are recorded by synchronization output and automated refresh commits. Maintenance policy lives in `AGENTS.md`.

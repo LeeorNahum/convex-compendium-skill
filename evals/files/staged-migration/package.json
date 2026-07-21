@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "packageManager": "npm@11.4.2",
+  "dependencies": {
+    "convex": "1.41.0",
+    "@convex-dev/migrations": "0.3.1"
+  }
+}

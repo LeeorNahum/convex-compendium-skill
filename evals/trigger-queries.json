@@ -1,0 +1,127 @@
+{
+  "skill_name": "convex-compendium",
+  "runs_per_query": 3,
+  "trigger_evidence": "The agent reads .agents/skills/convex-compendium/SKILL.md through the repository skill index.",
+  "queries": [
+    {
+      "id": "train-positive-schema",
+      "split": "train",
+      "query": "Add a messages table to our Convex schema and create an indexed query for one channel.",
+      "should_trigger": true
+    },
+    {
+      "id": "train-positive-generated-api",
+      "split": "train",
+      "query": "Our convex/react caller still uses a stale function from convex/_generated/api after I renamed a mutation. Repair the generated contract and caller.",
+      "should_trigger": true
+    },
+    {
+      "id": "train-positive-db-boundary",
+      "split": "train",
+      "query": "This action calls ctx.db.patch and fails. Move the database work to the correct backend boundary.",
+      "should_trigger": true
+    },
+    {
+      "id": "train-positive-index",
+      "split": "train",
+      "query": "Our Convex list query filters every document after collect. Add the right compound index and keep pagination correct.",
+      "should_trigger": true
+    },
+    {
+      "id": "train-positive-auth",
+      "split": "train",
+      "query": "A mutation accepts userId from the browser and uses it as authorization. Make it trust the Convex identity instead.",
+      "should_trigger": true
+    },
+    {
+      "id": "train-negative-react-query",
+      "split": "train",
+      "query": "Tune React Query cache invalidation after a profile mutation.",
+      "should_trigger": false
+    },
+    {
+      "id": "train-negative-prisma",
+      "split": "train",
+      "query": "Add a relation and migration to our Prisma schema.",
+      "should_trigger": false
+    },
+    {
+      "id": "train-negative-sql-index",
+      "split": "train",
+      "query": "Choose a covering PostgreSQL index for this EXPLAIN ANALYZE output.",
+      "should_trigger": false
+    },
+    {
+      "id": "train-negative-actions",
+      "split": "train",
+      "query": "Schedule a GitHub Actions workflow every Monday and upload its artifacts.",
+      "should_trigger": false
+    },
+    {
+      "id": "train-negative-next-api",
+      "split": "train",
+      "query": "Add a generic Next.js route handler that forwards JSON to an internal service.",
+      "should_trigger": false
+    },
+    {
+      "id": "validation-positive-occ",
+      "split": "validation",
+      "query": "Convex reports OCC conflicts when many clients update presence on the same room document. Redesign the hot write path.",
+      "should_trigger": true
+    },
+    {
+      "id": "validation-positive-migration",
+      "split": "validation",
+      "query": "Make a new Convex field required across existing documents without breaking the deployment between code versions.",
+      "should_trigger": true
+    },
+    {
+      "id": "validation-positive-webhook",
+      "split": "validation",
+      "query": "Our convex/http.ts webhook trusts req.json before checking its signature and creates duplicates on retry. Fix it.",
+      "should_trigger": true
+    },
+    {
+      "id": "validation-positive-component",
+      "split": "validation",
+      "query": "Extract this backend into a Convex component, but it currently imports the app's generated api and reads app auth directly.",
+      "should_trigger": true
+    },
+    {
+      "id": "validation-positive-version",
+      "split": "validation",
+      "query": "Upgrade this repository's old convex package and legacy function declarations, but verify the installed version before changing syntax.",
+      "should_trigger": true
+    },
+    {
+      "id": "validation-negative-mongodb",
+      "split": "validation",
+      "query": "Design MongoDB collections and aggregation pipelines for an analytics service.",
+      "should_trigger": false
+    },
+    {
+      "id": "validation-negative-clerk",
+      "split": "validation",
+      "query": "Configure Clerk organizations and invitations in a frontend that has no Convex backend.",
+      "should_trigger": false
+    },
+    {
+      "id": "validation-negative-geometry",
+      "split": "validation",
+      "query": "Compute the convex hull of a set of two-dimensional points.",
+      "should_trigger": false
+    },
+    {
+      "id": "validation-negative-optimization",
+      "split": "validation",
+      "query": "Explain why this objective is convex and solve the constrained optimization problem.",
+      "should_trigger": false
+    },
+    {
+      "id": "validation-negative-locking",
+      "split": "validation",
+      "query": "Reduce optimistic locking conflicts in our Hibernate application backed by MySQL.",
+      "should_trigger": false
+    }
+  ]
+}
