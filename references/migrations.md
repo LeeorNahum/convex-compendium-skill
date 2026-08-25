@@ -2,7 +2,9 @@
 
 # Convex Migration Helper
 
-_Source: <https://github.com/get-convex/agent-skills/tree/main/skills/convex-migration-helper>_
+_Source: <https://github.com/get-convex/agent-skills/tree/ec1e6baae7d86c7843c22938c75979c016f5c6e9/skills/convex-migration-helper>_
+
+> Frozen on 2026-08-25 at upstream commit ec1e6baae7d86c7843c22938c75979c016f5c6e9, the last revision that published this skill. Upstream replaced it with the generated `convex-migrate` procedure, which depends on convex-agents hub tooling and drops the material bundled here. The source manifest records this freeze.
 
 > The Convex AI guidance is already bundled in this skill, so do not install another copy.
 

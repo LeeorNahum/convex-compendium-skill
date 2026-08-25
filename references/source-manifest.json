@@ -1,5 +1,5 @@
 {
-  "formatVersion": 1,
+  "formatVersion": 2,
   "generated": true,
   "generator": "scripts/sync.mjs",
   "repositories": [
@@ -24,32 +24,98 @@
   ],
   "taskSkills": {
     "mapped": {
-      "convex-quickstart": "quickstart.md",
-      "convex-setup-auth": "auth.md",
-      "convex-create-component": "components.md",
-      "convex-migration-helper": "migrations.md",
-      "convex-performance-audit": "performance.md"
+      "convex-create-component": "components.md"
     },
-    "excluded": [
-      "convex"
-    ]
+    "frozen": {
+      "convex-quickstart": {
+        "output": "quickstart.md",
+        "pinnedCommit": "ec1e6baae7d86c7843c22938c75979c016f5c6e9",
+        "frozenOn": "2026-08-25",
+        "replacedBy": [
+          "convex-quickstart"
+        ],
+        "reason": "Upstream regenerated its catalog from the convex-agents hub on 2026-08-01 and replaced this skill with a short generated procedure that depends on hub tooling and drops the reference material bundled here."
+      },
+      "convex-setup-auth": {
+        "output": "auth.md",
+        "pinnedCommit": "ec1e6baae7d86c7843c22938c75979c016f5c6e9",
+        "frozenOn": "2026-08-25",
+        "replacedBy": [
+          "convex-auth"
+        ],
+        "reason": "Upstream regenerated its catalog from the convex-agents hub on 2026-08-01 and replaced this skill with a short generated procedure that depends on hub tooling and drops the reference material bundled here."
+      },
+      "convex-migration-helper": {
+        "output": "migrations.md",
+        "pinnedCommit": "ec1e6baae7d86c7843c22938c75979c016f5c6e9",
+        "frozenOn": "2026-08-25",
+        "replacedBy": [
+          "convex-migrate"
+        ],
+        "reason": "Upstream regenerated its catalog from the convex-agents hub on 2026-08-01 and replaced this skill with a short generated procedure that depends on hub tooling and drops the reference material bundled here."
+      },
+      "convex-performance-audit": {
+        "output": "performance.md",
+        "pinnedCommit": "ec1e6baae7d86c7843c22938c75979c016f5c6e9",
+        "frozenOn": "2026-08-25",
+        "replacedBy": [
+          "convex-optimize",
+          "convex-advisor"
+        ],
+        "reason": "Upstream regenerated its catalog from the convex-agents hub on 2026-08-01 and replaced this skill with a short generated procedure that depends on hub tooling and drops the reference material bundled here."
+      }
+    },
+    "excluded": {
+      "convex": "Router. This skill owns routing and already bundles the material the router installs.",
+      "convex-add": "Generated hub procedure added on 2026-08-01. It depends on convex-agents hub tooling and is not vendored.",
+      "convex-advisor": "Generated hub procedure that replaced convex-performance-audit on 2026-08-01. The fuller pre-regeneration workflow is frozen as performance.md.",
+      "convex-agent": "Generated hub procedure added on 2026-08-01. It depends on convex-agents hub tooling and is not vendored.",
+      "convex-auth": "Generated hub procedure that replaced convex-setup-auth on 2026-08-01. The fuller pre-regeneration workflow is frozen as auth.md.",
+      "convex-authz": "Generated hub procedure added on 2026-08-01. It depends on convex-agents hub tooling and is not vendored.",
+      "convex-backup": "Generated hub procedure added on 2026-08-01. It depends on convex-agents hub tooling and is not vendored.",
+      "convex-billing": "Generated hub procedure added on 2026-08-01. It depends on convex-agents hub tooling and is not vendored.",
+      "convex-cost": "Generated hub procedure added on 2026-08-01. It depends on convex-agents hub tooling and is not vendored.",
+      "convex-crons": "Generated hub procedure added on 2026-08-01. It depends on convex-agents hub tooling and is not vendored.",
+      "convex-deploy-guard": "Generated hub procedure added on 2026-08-01. It depends on convex-agents hub tooling and is not vendored.",
+      "convex-design": "Generated hub procedure added on 2026-08-01. It depends on convex-agents hub tooling and is not vendored.",
+      "convex-docs": "Generated hub procedure added on 2026-08-01. It depends on convex-agents hub tooling and is not vendored.",
+      "convex-domains": "Generated hub procedure added on 2026-08-01. It depends on convex-agents hub tooling and is not vendored.",
+      "convex-env": "Generated hub procedure added on 2026-08-01. It depends on convex-agents hub tooling and is not vendored.",
+      "convex-expert": "Generated hub procedure added on 2026-08-01. It depends on convex-agents hub tooling and is not vendored.",
+      "convex-explain-app": "Generated hub procedure added on 2026-08-01. It depends on convex-agents hub tooling and is not vendored.",
+      "convex-improve-convex-plugin": "Generated hub procedure added on 2026-08-01. It depends on convex-agents hub tooling and is not vendored.",
+      "convex-insights": "Generated hub procedure added on 2026-08-01. It depends on convex-agents hub tooling and is not vendored.",
+      "convex-launch-readiness": "Generated hub procedure added on 2026-08-01. It depends on convex-agents hub tooling and is not vendored.",
+      "convex-migrate": "Generated hub procedure that replaced convex-migration-helper on 2026-08-01. The fuller pre-regeneration workflow is frozen as migrations.md.",
+      "convex-migrate-rehearse": "Generated hub procedure added on 2026-08-01. It depends on convex-agents hub tooling and is not vendored.",
+      "convex-monitor": "Generated hub procedure added on 2026-08-01. It depends on convex-agents hub tooling and is not vendored.",
+      "convex-optimize": "Generated hub procedure that replaced convex-performance-audit on 2026-08-01. The fuller pre-regeneration workflow is frozen as performance.md.",
+      "convex-quickstart": "Generated hub procedure that replaced convex-quickstart on 2026-08-01. The fuller pre-regeneration workflow is frozen as quickstart.md.",
+      "convex-reviewer": "Generated hub procedure added on 2026-08-01. It depends on convex-agents hub tooling and is not vendored.",
+      "convex-seed": "Generated hub procedure added on 2026-08-01. It depends on convex-agents hub tooling and is not vendored.",
+      "convex-self-heal": "Generated hub procedure added on 2026-08-01. It depends on convex-agents hub tooling and is not vendored.",
+      "convex-sentinel": "Generated hub procedure added on 2026-08-01. It depends on convex-agents hub tooling and is not vendored.",
+      "convex-suggest": "Generated hub procedure added on 2026-08-01. It depends on convex-agents hub tooling and is not vendored.",
+      "convex-test": "Generated hub procedure added on 2026-08-01. It depends on convex-agents hub tooling and is not vendored.",
+      "convex-verify": "Generated hub procedure added on 2026-08-01. It depends on convex-agents hub tooling and is not vendored."
+    }
   },
   "guidelines": {
     "path": "runner/models/guidelines.md",
-    "targetConvexRange": "^1.41.0"
+    "targetConvexRange": "^1.44.0"
   },
   "sources": [
     {
       "repository": "get-convex/convex-evals",
       "path": "runner/models/guidelines.md",
-      "blobSha": "779f7475283bd40077791678172c7d3fc800badf",
-      "sha256": "f730e6620e882fef21a3e00c5539cc0b472ef26688efd92bf3a42f0711de6888"
+      "blobSha": "e3f61212b97cfbf9cdfe62968d967ab79c05cfbd",
+      "sha256": "533ba2428f2dc572e825555e6e681d2e56e7e757c15a3fdd036a5d705413f020"
     },
     {
       "repository": "get-convex/agent-skills",
       "path": "skills/convex-create-component/references/advanced-patterns.md",
-      "blobSha": "9e560801fb6afc3a2bdd7429e11a76cd55aafcce",
-      "sha256": "02da039712bb9bbf0aac46f109b87fe1add5c9ec9c652f2bed38c6673efff47d"
+      "blobSha": "1f7adb4ea7845365e6f1267af518116da3347ae3",
+      "sha256": "f1b24ad918a1a517b0eb03ad3c088daf06bc5c674983a40cac8b46463acd99ce"
     },
     {
       "repository": "get-convex/agent-skills",
@@ -78,84 +144,98 @@
     {
       "repository": "get-convex/agent-skills",
       "path": "skills/convex-migration-helper/references/migration-patterns.md",
+      "pinnedCommit": "ec1e6baae7d86c7843c22938c75979c016f5c6e9",
       "blobSha": "7201f7eee62e16b1cb0261dfb6f2bccfb500c566",
       "sha256": "6a891a932fdb045862ba09e50ba5c932469759562f053466149dc8f5390c7456"
     },
     {
       "repository": "get-convex/agent-skills",
       "path": "skills/convex-migration-helper/references/migrations-component.md",
+      "pinnedCommit": "ec1e6baae7d86c7843c22938c75979c016f5c6e9",
       "blobSha": "f4daa65b700377d6a1e4fea3c68164abfdaec335",
       "sha256": "fa2bd0ce2832f0e9d317d319974702e8cb28818f8bd46a8aca6037dfb908769a"
     },
     {
       "repository": "get-convex/agent-skills",
       "path": "skills/convex-migration-helper/SKILL.md",
+      "pinnedCommit": "ec1e6baae7d86c7843c22938c75979c016f5c6e9",
       "blobSha": "8ce9874bf93d06c391e49350d1e938226ee45a56",
       "sha256": "77bc11973377357633cf80c1d111abd52daaa4249cc6ed25b76fac51457ce7ce"
     },
     {
       "repository": "get-convex/agent-skills",
       "path": "skills/convex-performance-audit/references/function-budget.md",
+      "pinnedCommit": "ec1e6baae7d86c7843c22938c75979c016f5c6e9",
       "blobSha": "3e8dfef46127129832effc24820e80eead231251",
       "sha256": "4e8e5e07a910b16967a2508f79733a10249409aecf763d548ddd3fbdbb4dc941"
     },
     {
       "repository": "get-convex/agent-skills",
       "path": "skills/convex-performance-audit/references/hot-path-rules.md",
+      "pinnedCommit": "ec1e6baae7d86c7843c22938c75979c016f5c6e9",
       "blobSha": "142231dfbc4a8dd1eb0d2b0957b0a7acd59ac805",
       "sha256": "9ab8f2f8a7645a78ff404f22d16f749f6bd12ebc929f6e397fb833ea7f001c1d"
     },
     {
       "repository": "get-convex/agent-skills",
       "path": "skills/convex-performance-audit/references/occ-conflicts.md",
+      "pinnedCommit": "ec1e6baae7d86c7843c22938c75979c016f5c6e9",
       "blobSha": "e7d0954e4e222e3aefcd475c66bf8f29af5e55cd",
       "sha256": "e55004cbcbbf1ec84b8ad041e80efdb3eaaf1d6086cb6f1eacc83ccc52000a8f"
     },
     {
       "repository": "get-convex/agent-skills",
       "path": "skills/convex-performance-audit/references/subscription-cost.md",
+      "pinnedCommit": "ec1e6baae7d86c7843c22938c75979c016f5c6e9",
       "blobSha": "78f05b0e5603964786d751ad41836241faac30fb",
       "sha256": "464f4c88f6fec00a90f05a05bdde000dc705c1f974683726fb19f39c5fbbd99c"
     },
     {
       "repository": "get-convex/agent-skills",
       "path": "skills/convex-performance-audit/SKILL.md",
+      "pinnedCommit": "ec1e6baae7d86c7843c22938c75979c016f5c6e9",
       "blobSha": "998af1d10a8d9095927aa8dffe46d4fbcae03d41",
       "sha256": "7a3943446e7c654d4d37b960cd75f10eae89d6e9ef57c9bf72fd4b9754cd31d1"
     },
     {
       "repository": "get-convex/agent-skills",
       "path": "skills/convex-quickstart/SKILL.md",
+      "pinnedCommit": "ec1e6baae7d86c7843c22938c75979c016f5c6e9",
       "blobSha": "09400d39c1a81a4a7c42be39b5c23cfed98c4e9c",
       "sha256": "3cdc8fc0c306f662f35c559654798023b505de558b4e212a575babc574436b59"
     },
     {
       "repository": "get-convex/agent-skills",
       "path": "skills/convex-setup-auth/references/auth0.md",
+      "pinnedCommit": "ec1e6baae7d86c7843c22938c75979c016f5c6e9",
       "blobSha": "c1e08a5ae062366a6b4181b1bba9341006ebee86",
       "sha256": "2f37666fc4ecba8359a34138c32b9525fb062d0736b6a0d4c8e19010a84af61d"
     },
     {
       "repository": "get-convex/agent-skills",
       "path": "skills/convex-setup-auth/references/clerk.md",
+      "pinnedCommit": "ec1e6baae7d86c7843c22938c75979c016f5c6e9",
       "blobSha": "20f37dd7be2b1b3f671fd9f8dbaea4dd4adb6986",
       "sha256": "6c400d6da5253ea97a0437d54cf809e6abbf621d6521e5443b87eb9b51e86f8b"
     },
     {
       "repository": "get-convex/agent-skills",
       "path": "skills/convex-setup-auth/references/convex-auth.md",
+      "pinnedCommit": "ec1e6baae7d86c7843c22938c75979c016f5c6e9",
       "blobSha": "480672e97bbe84875ab9336a7dbf95466a5f4088",
       "sha256": "5f8eb30d3ee4b8fcba2c75e5e33c8eed0f9cc69840a7bf01419b7adc4db36062"
     },
     {
       "repository": "get-convex/agent-skills",
       "path": "skills/convex-setup-auth/references/workos-authkit.md",
+      "pinnedCommit": "ec1e6baae7d86c7843c22938c75979c016f5c6e9",
       "blobSha": "7c031b33b81e9a524736ec22d345ddba50e74aed",
       "sha256": "53a35fd5f45b05548edc049a1fdb138a249748ad2afaea158af1b9ec7caed475"
     },
     {
       "repository": "get-convex/agent-skills",
       "path": "skills/convex-setup-auth/SKILL.md",
+      "pinnedCommit": "ec1e6baae7d86c7843c22938c75979c016f5c6e9",
       "blobSha": "410198f042f75ebb09e3813a19a7a2e7052161bf",
       "sha256": "771d9fb3c0e4c3ecad71634e3acdd1c69f5e8529879a036005fa9a680c8ffbfb"
     }
@@ -163,7 +243,7 @@
   "outputs": [
     {
       "path": "references/auth.md",
-      "sha256": "e909d9ea066d101caaa4603cb716c265161183ce92845e2af8db9af217ddbc41",
+      "sha256": "0887b54b2228bc5bf624ca35cf8eb3a3cba56271fca7340f0a65e7d92c5b8a23",
       "sources": [
         "skills/convex-setup-auth/SKILL.md",
         "skills/convex-setup-auth/references/auth0.md",
@@ -174,7 +254,7 @@
     },
     {
       "path": "references/components.md",
-      "sha256": "6ac76726912bd7d0494e6d3eba1f140fd948b3a4d12a1ee2c7f7a4bf60a2fd86",
+      "sha256": "9ce0be7cf019439db37f0258835af930d884850859bce628ec9dfdc5bba03716",
       "sources": [
         "skills/convex-create-component/SKILL.md",
         "skills/convex-create-component/references/advanced-patterns.md",
@@ -185,14 +265,14 @@
     },
     {
       "path": "references/guidelines.md",
-      "sha256": "5d8e38e668a15ec260e5c062c1363b0190ab46ef09f62dcc26acba363b1f58ef",
+      "sha256": "4399a8f8dd79caedbe84653bbc079841484b9e457d1fce801c1c94c20d33a563",
       "sources": [
         "runner/models/guidelines.md"
       ]
     },
     {
       "path": "references/migrations.md",
-      "sha256": "66ed0f12894810d667df2cde817d0117e5055490caf423b488e7d7d9ef860900",
+      "sha256": "08ce6e6fc4fd4326e55ef53ace8d64eca485539c747fb5411ced901f20ad189d",
       "sources": [
         "skills/convex-migration-helper/SKILL.md",
         "skills/convex-migration-helper/references/migration-patterns.md",
@@ -201,7 +281,7 @@
     },
     {
       "path": "references/performance.md",
-      "sha256": "f8d2c44c4c6d36029c1d62faf19004e69cfcd10a71f53d775a1dff86fc41bb03",
+      "sha256": "f9c6adbabb390212fd675f8aa0f37ef23275e9635856abf8ce21a67da4d9e600",
       "sources": [
         "skills/convex-performance-audit/SKILL.md",
         "skills/convex-performance-audit/references/function-budget.md",
@@ -212,7 +292,7 @@
     },
     {
       "path": "references/quickstart.md",
-      "sha256": "9cc5c5a932ac456df74137c3f0d11f96634eab5f99985892dce4f7bb723159f6",
+      "sha256": "1f9fdeae7270077dc1a64f2e0a6b2c54fbfce31149ffbd8fd8d5df1309aff2ba",
       "sources": [
         "skills/convex-quickstart/SKILL.md"
       ]

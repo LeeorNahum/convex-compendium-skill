@@ -27,14 +27,87 @@ const CONVEX_EVALS_REPO = {
   expectedLicense: "Apache-2.0",
 };
 const GUIDELINES_PATH = "runner/models/guidelines.md";
-const EXCLUDED_SKILLS = new Set(["convex"]);
 
-export const SKILL_MAP = new Map([
-  ["convex-quickstart", "quickstart.md"],
-  ["convex-setup-auth", "auth.md"],
+// On 2026-08-01 upstream regenerated its catalog from the convex-agents hub
+// (get-convex/agent-skills#22). The hand-written task skills that this skill
+// vendored were deleted or replaced by short generated procedures that depend
+// on hub tooling (served capability catalog, recipes, findings bus, MCP tools)
+// and drop the reference material bundled here. Those workflows are frozen at
+// the last upstream commit that published them. Git history is immutable, so
+// the frozen sources are still fetched and rendered by this script on every run.
+export const FROZEN_UPSTREAM_COMMIT = "ec1e6baae7d86c7843c22938c75979c016f5c6e9";
+export const FROZEN_ON = "2026-08-25";
+export const FROZEN_REASON =
+  "Upstream regenerated its catalog from the convex-agents hub on 2026-08-01 and replaced this skill with a short generated procedure that depends on hub tooling and drops the reference material bundled here.";
+
+// Live task skills are tracked at the upstream default branch.
+export const LIVE_SKILL_MAP = new Map([
   ["convex-create-component", "components.md"],
-  ["convex-migration-helper", "migrations.md"],
-  ["convex-performance-audit", "performance.md"],
+]);
+
+// Frozen task skills are rendered from FROZEN_UPSTREAM_COMMIT.
+export const FROZEN_SKILLS = new Map([
+  [
+    "convex-quickstart",
+    { output: "quickstart.md", replacedBy: ["convex-quickstart"] },
+  ],
+  ["convex-setup-auth", { output: "auth.md", replacedBy: ["convex-auth"] }],
+  [
+    "convex-migration-helper",
+    { output: "migrations.md", replacedBy: ["convex-migrate"] },
+  ],
+  [
+    "convex-performance-audit",
+    {
+      output: "performance.md",
+      replacedBy: ["convex-optimize", "convex-advisor"],
+    },
+  ],
+]);
+
+// Every upstream skill at the default branch needs a recorded decision. A new
+// upstream skill without one fails synchronization until it is reviewed here.
+const ROUTER_REASON =
+  "Router. This skill owns routing and already bundles the material the router installs.";
+const HUB_STUB_REASON =
+  "Generated hub procedure added on 2026-08-01. It depends on convex-agents hub tooling and is not vendored.";
+function replacementReason(frozenFolder) {
+  const output = FROZEN_SKILLS.get(frozenFolder).output;
+  return `Generated hub procedure that replaced ${frozenFolder} on 2026-08-01. The fuller pre-regeneration workflow is frozen as ${output}.`;
+}
+export const EXCLUDED_SKILLS = new Map([
+  ["convex", ROUTER_REASON],
+  ["convex-quickstart", replacementReason("convex-quickstart")],
+  ["convex-auth", replacementReason("convex-setup-auth")],
+  ["convex-migrate", replacementReason("convex-migration-helper")],
+  ["convex-optimize", replacementReason("convex-performance-audit")],
+  ["convex-advisor", replacementReason("convex-performance-audit")],
+  ["convex-add", HUB_STUB_REASON],
+  ["convex-agent", HUB_STUB_REASON],
+  ["convex-authz", HUB_STUB_REASON],
+  ["convex-backup", HUB_STUB_REASON],
+  ["convex-billing", HUB_STUB_REASON],
+  ["convex-cost", HUB_STUB_REASON],
+  ["convex-crons", HUB_STUB_REASON],
+  ["convex-deploy-guard", HUB_STUB_REASON],
+  ["convex-design", HUB_STUB_REASON],
+  ["convex-docs", HUB_STUB_REASON],
+  ["convex-domains", HUB_STUB_REASON],
+  ["convex-env", HUB_STUB_REASON],
+  ["convex-expert", HUB_STUB_REASON],
+  ["convex-explain-app", HUB_STUB_REASON],
+  ["convex-improve-convex-plugin", HUB_STUB_REASON],
+  ["convex-insights", HUB_STUB_REASON],
+  ["convex-launch-readiness", HUB_STUB_REASON],
+  ["convex-migrate-rehearse", HUB_STUB_REASON],
+  ["convex-monitor", HUB_STUB_REASON],
+  ["convex-reviewer", HUB_STUB_REASON],
+  ["convex-seed", HUB_STUB_REASON],
+  ["convex-self-heal", HUB_STUB_REASON],
+  ["convex-sentinel", HUB_STUB_REASON],
+  ["convex-suggest", HUB_STUB_REASON],
+  ["convex-test", HUB_STUB_REASON],
+  ["convex-verify", HUB_STUB_REASON],
 ]);
 
 export const GENERATED_BANNER =
@@ -52,6 +125,39 @@ export function normalizeText(value) {
 
 export function sha256(value) {
   return createHash("sha256").update(value).digest("hex");
+}
+
+export function validateSkillDecisions() {
+  const outputs = new Map();
+  for (const [folder, output] of LIVE_SKILL_MAP) {
+    if (FROZEN_SKILLS.has(folder)) {
+      throw new Error(`${folder} is both live and frozen`);
+    }
+    if (EXCLUDED_SKILLS.has(folder)) {
+      throw new Error(`${folder} is both live and excluded`);
+    }
+    if (outputs.has(output)) {
+      throw new Error(`Two upstream skills map to ${output}`);
+    }
+    outputs.set(output, folder);
+  }
+  for (const [folder, config] of FROZEN_SKILLS) {
+    if (outputs.has(config.output)) {
+      throw new Error(`Two upstream skills map to ${config.output}`);
+    }
+    outputs.set(config.output, folder);
+    for (const replacement of config.replacedBy) {
+      if (!EXCLUDED_SKILLS.has(replacement)) {
+        throw new Error(
+          `${folder} names replacement ${replacement} without an exclusion decision`,
+        );
+      }
+    }
+  }
+  if (outputs.has("guidelines.md") || outputs.has("source-manifest.json")) {
+    throw new Error("A task skill maps to a reserved output name");
+  }
+  return outputs;
 }
 
 export function parseArgs(argv) {
@@ -110,6 +216,8 @@ Options:
   --convex-evals-sha SHA     Pin get-convex/convex-evals to a full Git SHA
   -h, --help                 Show this help without network access
 
+Live task skills follow the pinned or default-branch revision. Frozen task
+skills are always rendered from ${FROZEN_UPSTREAM_COMMIT}.
 The script owns every file in references/. It never edits SKILL.md or changes
 metadata.version.`);
 }
@@ -196,6 +304,26 @@ export function validateTree(value, repo) {
   return blobs;
 }
 
+export async function inspectRevision(config, commitRef, fetchImpl) {
+  const commit = await fetchJson(
+    `https://api.github.com/repos/${config.name}/commits/${commitRef}`,
+    fetchImpl,
+  );
+  const sha = validateCommit(commit, config.name);
+  if (FULL_SHA.test(commitRef) && sha !== commitRef.toLowerCase()) {
+    throw new Error(
+      `${config.name} resolved ${commitRef} to unexpected commit ${sha}`,
+    );
+  }
+
+  const tree = await fetchJson(
+    `https://api.github.com/repos/${config.name}/git/trees/${sha}?recursive=1`,
+    fetchImpl,
+  );
+
+  return { name: config.name, sha, blobs: validateTree(tree, config.name) };
+}
+
 export async function inspectRepository(config, suppliedSha, fetchImpl) {
   const metadata = await fetchJson(
     `https://api.github.com/repos/${config.name}`,
@@ -215,20 +343,9 @@ export async function inspectRepository(config, suppliedSha, fetchImpl) {
     );
   }
 
-  const commitRef = suppliedSha ?? metadata.default_branch;
-  const commit = await fetchJson(
-    `https://api.github.com/repos/${config.name}/commits/${commitRef}`,
-    fetchImpl,
-  );
-  const sha = validateCommit(commit, config.name);
-  if (suppliedSha && sha !== suppliedSha.toLowerCase()) {
-    throw new Error(
-      `${config.name} resolved ${suppliedSha} to unexpected commit ${sha}`,
-    );
-  }
-
-  const tree = await fetchJson(
-    `https://api.github.com/repos/${config.name}/git/trees/${sha}?recursive=1`,
+  const revision = await inspectRevision(
+    config,
+    suppliedSha ?? metadata.default_branch,
     fetchImpl,
   );
 
@@ -237,58 +354,92 @@ export async function inspectRepository(config, suppliedSha, fetchImpl) {
     url: metadata.html_url,
     defaultBranch: metadata.default_branch,
     license,
-    sha,
-    blobs: validateTree(tree, config.name),
+    sha: revision.sha,
+    blobs: revision.blobs,
   };
 }
 
-export function validateSourceShape(agentBlobs, evalBlobs) {
+function discoverSkills(blobs) {
   const discovered = new Set();
-  for (const sourcePath of agentBlobs.keys()) {
+  for (const sourcePath of blobs.keys()) {
     const match = sourcePath.match(/^skills\/(convex[^/]*)\/SKILL\.md$/);
     if (match) discovered.add(match[1]);
   }
+  return discovered;
+}
 
-  const expected = new Set([...SKILL_MAP.keys(), ...EXCLUDED_SKILLS]);
-  for (const name of expected) {
+function collectSkillSources(folder, blobs, output) {
+  const skillPath = `skills/${folder}/SKILL.md`;
+  if (!blobs.has(skillPath)) {
+    throw new Error(`Required source is missing: ${skillPath}`);
+  }
+  const prefix = `skills/${folder}/references/`;
+  const references = [];
+  for (const sourcePath of blobs.keys()) {
+    if (!sourcePath.startsWith(prefix)) continue;
+    const relative = sourcePath.slice(prefix.length);
+    if (!relative.endsWith(".md") || relative.includes("/")) {
+      throw new Error(
+        `Expected one-level Markdown references for ${folder}, found ${sourcePath}`,
+      );
+    }
+    references.push(sourcePath);
+  }
+  references.sort();
+  return { skillPath, references, output };
+}
+
+export function validateSourceShape(agentBlobs, frozenBlobs, evalBlobs) {
+  validateSkillDecisions();
+
+  const discovered = discoverSkills(agentBlobs);
+  for (const name of LIVE_SKILL_MAP.keys()) {
     if (!discovered.has(name)) {
       throw new Error(`Required upstream Convex skill is missing: ${name}`);
     }
   }
   for (const name of discovered) {
-    if (!expected.has(name)) {
+    if (LIVE_SKILL_MAP.has(name) || EXCLUDED_SKILLS.has(name)) continue;
+    if (FROZEN_SKILLS.has(name)) {
       throw new Error(
-        `Unmapped upstream Convex skill requires review: ${name}`,
+        `Frozen upstream Convex skill reappeared and requires review: ${name}`,
+      );
+    }
+    throw new Error(`Unmapped upstream Convex skill requires review: ${name}`);
+  }
+  for (const name of EXCLUDED_SKILLS.keys()) {
+    if (!discovered.has(name)) {
+      console.warn(
+        `exclusion decision for ${name} no longer matches an upstream skill`,
       );
     }
   }
 
-  const outputNames = new Set();
-  const sourcesBySkill = new Map();
-  for (const [folder, output] of SKILL_MAP) {
-    if (outputNames.has(output)) {
-      throw new Error(`Two upstream skills map to ${output}`);
+  const frozenDiscovered = discoverSkills(frozenBlobs);
+  for (const name of FROZEN_SKILLS.keys()) {
+    if (!frozenDiscovered.has(name)) {
+      throw new Error(
+        `Frozen upstream Convex skill is missing at ${FROZEN_UPSTREAM_COMMIT}: ${name}`,
+      );
     }
-    outputNames.add(output);
+  }
 
-    const skillPath = `skills/${folder}/SKILL.md`;
-    if (!agentBlobs.has(skillPath)) {
-      throw new Error(`Required source is missing: ${skillPath}`);
-    }
-    const prefix = `skills/${folder}/references/`;
-    const references = [];
-    for (const sourcePath of agentBlobs.keys()) {
-      if (!sourcePath.startsWith(prefix)) continue;
-      const relative = sourcePath.slice(prefix.length);
-      if (!relative.endsWith(".md") || relative.includes("/")) {
-        throw new Error(
-          `Expected one-level Markdown references for ${folder}, found ${sourcePath}`,
-        );
-      }
-      references.push(sourcePath);
-    }
-    references.sort();
-    sourcesBySkill.set(folder, { skillPath, references, output });
+  const sourcesBySkill = new Map();
+  for (const [folder, output] of LIVE_SKILL_MAP) {
+    sourcesBySkill.set(folder, {
+      ...collectSkillSources(folder, agentBlobs, output),
+      frozen: null,
+    });
+  }
+  for (const [folder, config] of FROZEN_SKILLS) {
+    sourcesBySkill.set(folder, {
+      ...collectSkillSources(folder, frozenBlobs, config.output),
+      frozen: {
+        commit: FROZEN_UPSTREAM_COMMIT,
+        frozenOn: FROZEN_ON,
+        replacedBy: [...config.replacedBy],
+      },
+    });
   }
 
   if (!evalBlobs.has(GUIDELINES_PATH)) {
@@ -513,8 +664,18 @@ export function validateGuidelines(markdown) {
   return version;
 }
 
-function provenanceHeader(title, sourceUrl) {
-  return `${GENERATED_BANNER}\n\n# ${title}\n\n_Source: <${sourceUrl}>_\n\n> ${BUNDLED_GUIDANCE}\n`;
+function frozenNotice(frozen) {
+  const replacements = frozen.replacedBy
+    .map((name) => `\`${name}\``)
+    .join(" and ");
+  return `> Frozen on ${frozen.frozenOn} at upstream commit ${frozen.commit}, the last revision that published this skill. Upstream replaced it with the generated ${replacements} procedure, which depends on convex-agents hub tooling and drops the material bundled here. The source manifest records this freeze.`;
+}
+
+function provenanceHeader(title, sourceUrl, frozen = null) {
+  const notices = [];
+  if (frozen) notices.push(frozenNotice(frozen));
+  notices.push(`> ${BUNDLED_GUIDANCE}`);
+  return `${GENERATED_BANNER}\n\n# ${title}\n\n_Source: <${sourceUrl}>_\n\n${notices.join("\n\n")}\n`;
 }
 
 function titleForSkill(folder) {
@@ -524,7 +685,12 @@ function titleForSkill(folder) {
     .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
-export function renderTaskReference({ folder, skillBody, references }) {
+export function renderTaskReference({
+  folder,
+  skillBody,
+  references,
+  frozen = null,
+}) {
   const referenceInfo = new Map();
   const prepared = [];
 
@@ -556,9 +722,10 @@ export function renderTaskReference({ folder, skillBody, references }) {
     body += `\n---\n\n<a id="${reference.rootAnchor}"></a>\n\n## Reference: ${reference.name}\n\n${subBody.trim()}\n`;
   }
 
-  const sourceUrl = `https://github.com/${AGENT_SKILLS_REPO.name}/tree/${AGENT_SKILLS_REPO.branch}/skills/${folder}`;
+  const revision = frozen ? frozen.commit : AGENT_SKILLS_REPO.branch;
+  const sourceUrl = `https://github.com/${AGENT_SKILLS_REPO.name}/tree/${revision}/skills/${folder}`;
   const output = normalizeText(
-    `${provenanceHeader(`Convex ${titleForSkill(folder)}`, sourceUrl)}\n${body.trim()}`,
+    `${provenanceHeader(`Convex ${titleForSkill(folder)}`, sourceUrl, frozen)}\n${body.trim()}`,
   );
   assertNoExecutableInstaller(output, folder);
   assertNoUnresolvedReferences(output, folder);
@@ -591,6 +758,20 @@ function repositoryManifest(snapshot) {
   };
 }
 
+function frozenManifest() {
+  const frozen = {};
+  for (const [folder, config] of FROZEN_SKILLS) {
+    frozen[folder] = {
+      output: config.output,
+      pinnedCommit: FROZEN_UPSTREAM_COMMIT,
+      frozenOn: FROZEN_ON,
+      replacedBy: [...config.replacedBy],
+      reason: FROZEN_REASON,
+    };
+  }
+  return frozen;
+}
+
 export function buildManifest({
   agentSnapshot,
   evalSnapshot,
@@ -604,6 +785,7 @@ export function buildManifest({
     .map((source) => ({
       repository: source.repository,
       path: source.path,
+      ...(source.pinnedCommit ? { pinnedCommit: source.pinnedCommit } : {}),
       blobSha: source.blobSha,
       sha256: sha256(source.body),
     }));
@@ -618,7 +800,7 @@ export function buildManifest({
   return normalizeText(
     JSON.stringify(
       {
-        formatVersion: 1,
+        formatVersion: 2,
         generated: true,
         generator: "scripts/sync.mjs",
         repositories: [
@@ -626,8 +808,11 @@ export function buildManifest({
           repositoryManifest(evalSnapshot),
         ].sort((a, b) => a.name.localeCompare(b.name)),
         taskSkills: {
-          mapped: Object.fromEntries(SKILL_MAP),
-          excluded: [...EXCLUDED_SKILLS].sort(),
+          mapped: Object.fromEntries(LIVE_SKILL_MAP),
+          frozen: frozenManifest(),
+          excluded: Object.fromEntries(
+            [...EXCLUDED_SKILLS].sort(([a], [b]) => a.localeCompare(b)),
+          ),
         },
         guidelines: {
           path: GUIDELINES_PATH,
@@ -816,37 +1001,36 @@ export async function generate({
   fetchImpl = fetch,
   referenceDir = REFERENCES,
 } = {}) {
-  const [agentSnapshot, evalSnapshot] = await Promise.all([
+  const [agentSnapshot, frozenSnapshot, evalSnapshot] = await Promise.all([
     inspectRepository(AGENT_SKILLS_REPO, agentSkillsSha, fetchImpl),
+    inspectRevision(AGENT_SKILLS_REPO, FROZEN_UPSTREAM_COMMIT, fetchImpl),
     inspectRepository(CONVEX_EVALS_REPO, convexEvalsSha, fetchImpl),
   ]);
 
   const sourceMap = validateSourceShape(
     agentSnapshot.blobs,
+    frozenSnapshot.blobs,
     evalSnapshot.blobs,
   );
   const rawUrl = (repo, sha, sourcePath) =>
     `https://raw.githubusercontent.com/${repo}/${sha}/${sourcePath}`;
   const required = [];
-  for (const { skillPath, references } of sourceMap.values()) {
-    required.push({
-      repository: agentSnapshot.name,
-      sha: agentSnapshot.sha,
-      path: skillPath,
-      blobSha: agentSnapshot.blobs.get(skillPath),
-    });
-    for (const sourcePath of references) {
+  for (const { skillPath, references, frozen } of sourceMap.values()) {
+    const snapshot = frozen ? frozenSnapshot : agentSnapshot;
+    for (const sourcePath of [skillPath, ...references]) {
       required.push({
-        repository: agentSnapshot.name,
-        sha: agentSnapshot.sha,
+        repository: snapshot.name,
+        sha: snapshot.sha,
+        pinnedCommit: frozen ? frozen.commit : null,
         path: sourcePath,
-        blobSha: agentSnapshot.blobs.get(sourcePath),
+        blobSha: snapshot.blobs.get(sourcePath),
       });
     }
   }
   required.push({
     repository: evalSnapshot.name,
     sha: evalSnapshot.sha,
+    pinnedCommit: null,
     path: GUIDELINES_PATH,
     blobSha: evalSnapshot.blobs.get(GUIDELINES_PATH),
   });
@@ -862,7 +1046,7 @@ export async function generate({
   );
   const bodies = new Map(
     consumedSources.map((source) => [
-      `${source.repository}:${source.path}`,
+      `${source.repository}:${source.sha}:${source.path}`,
       source.body,
     ]),
   );
@@ -870,19 +1054,29 @@ export async function generate({
   const markdownOutputs = new Map();
   const outputSources = new Map();
   for (const [folder, config] of sourceMap) {
-    const skillBody = bodies.get(`${agentSnapshot.name}:${config.skillPath}`);
+    const sha = config.frozen ? config.frozen.commit : agentSnapshot.sha;
+    const skillBody = bodies.get(
+      `${agentSnapshot.name}:${sha}:${config.skillPath}`,
+    );
     const references = config.references.map((sourcePath) => ({
       path: sourcePath,
-      body: bodies.get(`${agentSnapshot.name}:${sourcePath}`),
+      body: bodies.get(`${agentSnapshot.name}:${sha}:${sourcePath}`),
     }));
     markdownOutputs.set(
       config.output,
-      renderTaskReference({ folder, skillBody, references }),
+      renderTaskReference({
+        folder,
+        skillBody,
+        references,
+        frozen: config.frozen,
+      }),
     );
     outputSources.set(config.output, [config.skillPath, ...config.references]);
   }
 
-  const guidelinesBody = bodies.get(`${evalSnapshot.name}:${GUIDELINES_PATH}`);
+  const guidelinesBody = bodies.get(
+    `${evalSnapshot.name}:${evalSnapshot.sha}:${GUIDELINES_PATH}`,
+  );
   const targetRange = validateGuidelines(guidelinesBody);
   markdownOutputs.set("guidelines.md", renderGuidelines(guidelinesBody));
   outputSources.set("guidelines.md", [GUIDELINES_PATH]);
@@ -934,12 +1128,16 @@ export async function generate({
     `${check ? "checked" : isCurrent(diff) ? "unchanged" : "updated"} references/`,
   );
   console.log(`upstream ${agentSnapshot.name} @ ${agentSnapshot.sha}`);
+  console.log(
+    `frozen ${agentSnapshot.name} @ ${frozenSnapshot.sha} for ${[...FROZEN_SKILLS.keys()].join(", ")}`,
+  );
   console.log(`upstream ${evalSnapshot.name} @ ${evalSnapshot.sha}`);
   console.log(`guidelines target Convex ${targetRange}`);
   await writeGitHubOutput(agentSnapshot.sha, evalSnapshot.sha);
 
   return {
     agentSkillsSha: agentSnapshot.sha,
+    frozenAgentSkillsSha: frozenSnapshot.sha,
     convexEvalsSha: evalSnapshot.sha,
     targetRange,
     diff,
