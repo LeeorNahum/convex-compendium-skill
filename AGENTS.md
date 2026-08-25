@@ -31,7 +31,7 @@ The skill vendors exactly two first-party source repositories:
 
 | Source                                                                | Content                          | Destination                                                         | License observation                     |
 | --------------------------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------- | --------------------------------------- |
-| [get-convex/agent-skills](https://github.com/get-convex/agent-skills) | Five task skills under `skills/` | `references/{quickstart,auth,components,migrations,performance}.md` | No explicit repository license detected |
+| [get-convex/agent-skills](https://github.com/get-convex/agent-skills) | Task skills under `skills/`      | `references/{quickstart,auth,components,migrations,performance}.md` | No explicit repository license detected |
 | [get-convex/convex-evals](https://github.com/get-convex/convex-evals) | `runner/models/guidelines.md`    | `references/guidelines.md`                                          | Apache-2.0                              |
 
 The absent detected license on `get-convex/agent-skills` is an accepted observation for this repository's small self-contained vendored task model. Record and report it. Do not silently reinterpret it as a license grant. Fail if `get-convex/convex-evals` no longer reports Apache-2.0 because that changes the known redistribution basis for the canonical guidelines.
@@ -40,17 +40,24 @@ At use time, `SKILL.md` gives installed package contracts and the target reposit
 
 ## Closed Task Mapping
 
-`scripts/sync.mjs` maps exactly:
+`scripts/sync.mjs` records a decision for every `convex-*` folder under upstream `skills/`.
 
-- `convex-quickstart` to `quickstart.md`
-- `convex-setup-auth` to `auth.md`
+Live mapping, rendered from the upstream default branch:
+
 - `convex-create-component` to `components.md`
-- `convex-migration-helper` to `migrations.md`
-- `convex-performance-audit` to `performance.md`
 
-The upstream `convex` router is deliberately excluded because this skill owns routing and already bundles the material that router installs.
+Frozen mapping, rendered from upstream commit `ec1e6baae7d86c7843c22938c75979c016f5c6e9` since 2026-08-25:
 
-Synchronization fails when a mapped task or excluded router disappears, a new `convex-*` task appears without a decision, a tree is truncated, a source path becomes nested unexpectedly, frontmatter no longer matches its folder, links cannot be flattened, or canonical guideline structure drifts.
+- `convex-quickstart` to `quickstart.md`, superseded upstream by a regenerated `convex-quickstart`
+- `convex-setup-auth` to `auth.md`, superseded upstream by `convex-auth`
+- `convex-migration-helper` to `migrations.md`, superseded upstream by `convex-migrate`
+- `convex-performance-audit` to `performance.md`, superseded upstream by `convex-optimize` and `convex-advisor`
+
+On 2026-08-01 upstream regenerated its catalog from the convex-agents hub (get-convex/agent-skills#22). The replacements are short generated procedures, most of which depend on hub tooling such as the served capability catalog, recipes, the findings bus, and MCP tools. They drop the provider, migration, and performance reference material bundled here. Freezing keeps that coverage. Git history is immutable, so the frozen sources are fetched and rendered on every run and are never copied by hand.
+
+Every other upstream folder, including the `convex` router and the generated hub procedures, is excluded with a recorded reason in the script and the manifest. The manifest also records the current blob SHA of each named replacement, so an upstream rewrite of a replacement shows up as a manifest change in the refresh commit and can prompt a review of the freeze. Unfreezing a workflow or vendoring a new upstream skill is an authored decision that changes the skill version.
+
+Synchronization fails when a live mapped task disappears, a new `convex-*` folder appears without a decision, a frozen folder reappears at the default branch without a decision, a named replacement disappears from the default branch, a frozen source is missing at the pinned commit, a tree is truncated, a source path becomes nested unexpectedly, frontmatter no longer matches its folder, links cannot be flattened, or canonical guideline structure drifts. Any other exclusion decision that no longer matches an upstream folder only warns.
 
 ## Synchronization Contract
 
@@ -62,9 +69,9 @@ node scripts/sync.mjs --check
 node scripts/sync.mjs --help
 ```
 
-The script can pin both repositories with full SHAs. It resolves both revisions before fetching bodies, validates final HTTPS hosts, fetches every required source, transforms all output in memory, validates the complete set, then replaces `references/` atomically. A failed fetch or transform must leave disk unchanged.
+The script can pin both repositories with full SHAs. Frozen task skills ignore the agent-skills pin and always resolve the frozen commit. It resolves every revision before fetching bodies, validates final HTTPS hosts, fetches every required source, transforms all output in memory, validates the complete set, then replaces `references/` atomically. A failed fetch or transform must leave disk unchanged.
 
-Generated Markdown receives a source banner and stable source link without a moving commit SHA. `source-manifest.json` records repository metadata, license observations, task mapping, the guidelines' declared Convex range, every source path and blob SHA, source content hashes, output hashes, and output-to-source relationships. Exact resolved repository commits belong in command output and refresh commit messages.
+Generated Markdown receives a source banner and stable source link without a moving commit SHA. Frozen references link the pinned commit and carry a dated freeze notice. `source-manifest.json` records repository metadata, license observations, live, frozen, and excluded task decisions, the guidelines' declared Convex range, every source path and blob SHA, the pinned commit of every frozen source, source content hashes, output hashes, and output-to-source relationships. Exact resolved default-branch commits belong in command output and refresh commit messages.
 
 `--check` performs no writes. It reports missing, changed, and stale generated files separately. Normal generation refuses to delete an unrecognized hand-authored reference.
 

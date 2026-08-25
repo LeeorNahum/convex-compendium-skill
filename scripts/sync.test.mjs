@@ -5,7 +5,11 @@ import path from "node:path";
 import test from "node:test";
 
 import {
+  EXCLUDED_SKILLS,
+  FROZEN_SKILLS,
+  FROZEN_UPSTREAM_COMMIT,
   GENERATED_BANNER,
+  LIVE_SKILL_MAP,
   assertNoExecutableInstaller,
   assertSafeExistingFiles,
   buildManifest,
@@ -13,6 +17,7 @@ import {
   fetchValidated,
   generate,
   inspectRepository,
+  inspectRevision,
   namespaceHeadings,
   neutralizeInstallerCommands,
   normalizeText,
@@ -25,6 +30,7 @@ import {
   sha256,
   stripLeadingH1,
   validateGuidelines,
+  validateSkillDecisions,
   validateSourceShape,
   validateTree,
 } from "./sync.mjs";
@@ -41,17 +47,23 @@ function blobMap(paths) {
   );
 }
 
-function requiredAgentPaths(extra = []) {
+function headAgentPaths(extra = []) {
   return [
-    "skills/convex/SKILL.md",
-    "skills/convex-quickstart/SKILL.md",
-    "skills/convex-setup-auth/SKILL.md",
-    "skills/convex-create-component/SKILL.md",
-    "skills/convex-migration-helper/SKILL.md",
-    "skills/convex-performance-audit/SKILL.md",
+    ...[...LIVE_SKILL_MAP.keys(), ...EXCLUDED_SKILLS.keys()].map(
+      (folder) => `skills/${folder}/SKILL.md`,
+    ),
     ...extra,
   ];
 }
+
+function frozenAgentPaths(extra = []) {
+  return [
+    ...[...FROZEN_SKILLS.keys()].map((folder) => `skills/${folder}/SKILL.md`),
+    ...extra,
+  ];
+}
+
+const GUIDELINE_BLOBS = () => blobMap(["runner/models/guidelines.md"]);
 
 function response({ url, status = 200, body = "", json = null }) {
   return {
@@ -251,46 +263,144 @@ test("validateTree rejects invalid and truncated trees", () => {
   assert.deepEqual([...blobs], [["a.md", FULL_SHA]]);
 });
 
+test("skill decisions are disjoint and every replacement is excluded", () => {
+  const outputs = validateSkillDecisions();
+  assert.equal(outputs.size, LIVE_SKILL_MAP.size + FROZEN_SKILLS.size);
+  assert.equal(outputs.get("components.md"), "convex-create-component");
+  assert.equal(outputs.get("auth.md"), "convex-setup-auth");
+  assert.match(FROZEN_UPSTREAM_COMMIT, /^[0-9a-f]{40}$/);
+  for (const folder of FROZEN_SKILLS.keys()) {
+    assert.equal(LIVE_SKILL_MAP.has(folder), false);
+  }
+  for (const folder of LIVE_SKILL_MAP.keys()) {
+    assert.equal(EXCLUDED_SKILLS.has(folder), false);
+  }
+  assert.ok(EXCLUDED_SKILLS.has("convex"));
+  for (const reason of EXCLUDED_SKILLS.values()) {
+    assert.ok(reason.length > 20);
+  }
+});
+
 test("validateSourceShape requires the closed task set and guidelines", () => {
   const valid = validateSourceShape(
     blobMap(
-      requiredAgentPaths(["skills/convex-setup-auth/references/clerk.md"]),
+      headAgentPaths([
+        "skills/convex-create-component/references/local-components.md",
+      ]),
     ),
-    blobMap(["runner/models/guidelines.md"]),
+    blobMap(
+      frozenAgentPaths(["skills/convex-setup-auth/references/clerk.md"]),
+    ),
+    GUIDELINE_BLOBS(),
   );
+  assert.deepEqual(valid.get("convex-create-component").references, [
+    "skills/convex-create-component/references/local-components.md",
+  ]);
+  assert.equal(valid.get("convex-create-component").frozen, null);
   assert.deepEqual(valid.get("convex-setup-auth").references, [
     "skills/convex-setup-auth/references/clerk.md",
+  ]);
+  assert.equal(valid.get("convex-setup-auth").output, "auth.md");
+  assert.equal(
+    valid.get("convex-setup-auth").frozen.commit,
+    FROZEN_UPSTREAM_COMMIT,
+  );
+  assert.deepEqual(valid.get("convex-setup-auth").frozen.replacedBy, [
+    "convex-auth",
   ]);
 
   assert.throws(
     () =>
       validateSourceShape(
         blobMap(
-          requiredAgentPaths().filter((value) => !value.includes("quickstart")),
+          headAgentPaths().filter(
+            (value) => !value.includes("create-component"),
+          ),
         ),
-        blobMap(["runner/models/guidelines.md"]),
+        blobMap(frozenAgentPaths()),
+        GUIDELINE_BLOBS(),
       ),
-    /missing: convex-quickstart/,
+    /missing: convex-create-component/,
   );
   assert.throws(
     () =>
       validateSourceShape(
-        blobMap(requiredAgentPaths(["skills/convex-new-task/SKILL.md"])),
-        blobMap(["runner/models/guidelines.md"]),
+        blobMap(headAgentPaths(["skills/convex-new-task/SKILL.md"])),
+        blobMap(frozenAgentPaths()),
+        GUIDELINE_BLOBS(),
       ),
     /requires review: convex-new-task/,
   );
   assert.throws(
     () =>
       validateSourceShape(
+        blobMap(headAgentPaths(["skills/convex-setup-auth/SKILL.md"])),
+        blobMap(frozenAgentPaths()),
+        GUIDELINE_BLOBS(),
+      ),
+    /reappeared and requires review: convex-setup-auth/,
+  );
+  assert.throws(
+    () =>
+      validateSourceShape(
         blobMap(
-          requiredAgentPaths([
+          headAgentPaths().filter((value) => !value.includes("convex-auth/")),
+        ),
+        blobMap(frozenAgentPaths()),
+        GUIDELINE_BLOBS(),
+      ),
+    /Replacement upstream Convex skill disappeared and requires review: convex-auth/,
+  );
+  assert.throws(
+    () =>
+      validateSourceShape(
+        blobMap(headAgentPaths()),
+        blobMap(
+          frozenAgentPaths().filter((value) => !value.includes("setup-auth")),
+        ),
+        GUIDELINE_BLOBS(),
+      ),
+    /missing at [0-9a-f]{40}: convex-setup-auth/,
+  );
+  assert.throws(
+    () =>
+      validateSourceShape(
+        blobMap(headAgentPaths()),
+        blobMap(
+          frozenAgentPaths([
             "skills/convex-setup-auth/references/nested/provider.md",
           ]),
         ),
-        blobMap(["runner/models/guidelines.md"]),
+        GUIDELINE_BLOBS(),
       ),
     /one-level Markdown references/,
+  );
+  assert.throws(
+    () =>
+      validateSourceShape(
+        blobMap(headAgentPaths()),
+        blobMap(frozenAgentPaths()),
+        blobMap([]),
+      ),
+    /missing: runner\/models\/guidelines\.md/,
+  );
+});
+
+test("inspectRevision rejects a pin that resolves elsewhere", async () => {
+  const fetchImpl = async (url) => {
+    const parsed = new URL(url);
+    if (parsed.pathname.includes("/commits/")) {
+      return response({ url, json: { sha: FULL_SHA } });
+    }
+    throw new Error(`Unexpected fake URL ${url}`);
+  };
+  await assert.rejects(
+    inspectRevision(
+      { name: "get-convex/agent-skills", branch: "main" },
+      OTHER_SHA,
+      fetchImpl,
+    ),
+    /unexpected commit/,
   );
 });
 
@@ -319,6 +429,34 @@ test("renderTaskReference flattens references and rewrites links", () => {
   assert.match(output, /\[Clerk\]\(#reference-clerk-details\)/);
   assert.match(output, /<a id="reference-clerk"><\/a>/);
   assert.doesNotMatch(output, /npx convex ai-files install/);
+  assert.match(output, /tree\/main\/skills\/convex-setup-auth>/);
+  assert.doesNotMatch(output, /Frozen on/);
+});
+
+test("renderTaskReference links the pinned commit and notice for frozen skills", () => {
+  const output = renderTaskReference({
+    folder: "convex-setup-auth",
+    skillBody:
+      "---\nname: convex-setup-auth\ndescription: Auth.\n---\n# Setup Auth\n\nBody.\n",
+    references: [],
+    frozen: {
+      commit: FROZEN_UPSTREAM_COMMIT,
+      frozenOn: "2026-08-25",
+      replacedBy: ["convex-auth"],
+    },
+  });
+  assert.ok(output.startsWith(GENERATED_BANNER));
+  assert.match(
+    output,
+    new RegExp(`tree/${FROZEN_UPSTREAM_COMMIT}/skills/convex-setup-auth>`),
+  );
+  assert.match(
+    output,
+    new RegExp(`> Frozen on 2026-08-25 at upstream commit ${FROZEN_UPSTREAM_COMMIT}`),
+  );
+  assert.match(output, /generated `convex-auth` procedure/);
+  assert.match(output, /already bundled in this skill/);
+  assert.equal((output.match(/^# /gm) ?? []).length, 1);
 });
 
 test("renderGuidelines keeps one document title", () => {
@@ -339,8 +477,23 @@ test("fetchValidated rejects an unexpected redirect host", async () => {
   );
 });
 
-test("buildManifest is stable and excludes moving commit SHAs", () => {
-  const markdownOutputs = new Map([["quickstart.md", "content\n"]]);
+test("buildManifest is stable and records the frozen pin but no moving commit SHA", () => {
+  const markdownOutputs = new Map([
+    ["components.md", "content\n"],
+    ["auth.md", "frozen content\n"],
+  ]);
+  const taskSources = new Map([
+    [
+      "convex-setup-auth",
+      {
+        frozen: {
+          commit: FROZEN_UPSTREAM_COMMIT,
+          replacedBy: ["convex-auth"],
+          replacementBlobs: { "convex-auth": OTHER_SHA.replace(/b/g, "c") },
+        },
+      },
+    ],
+  ]);
   const manifest = buildManifest({
     agentSnapshot: {
       name: "get-convex/agent-skills",
@@ -360,20 +513,63 @@ test("buildManifest is stable and excludes moving commit SHAs", () => {
     consumedSources: [
       {
         repository: "get-convex/agent-skills",
-        path: "skills/convex-quickstart/SKILL.md",
+        path: "skills/convex-create-component/SKILL.md",
+        pinnedCommit: null,
         blobSha: FULL_SHA,
         body: "source\n",
       },
+      {
+        repository: "get-convex/agent-skills",
+        path: "skills/convex-setup-auth/SKILL.md",
+        pinnedCommit: FROZEN_UPSTREAM_COMMIT,
+        blobSha: FULL_SHA,
+        body: "frozen source\n",
+      },
     ],
     outputSources: new Map([
-      ["quickstart.md", ["skills/convex-quickstart/SKILL.md"]],
+      ["components.md", ["skills/convex-create-component/SKILL.md"]],
+      ["auth.md", ["skills/convex-setup-auth/SKILL.md"]],
     ]),
     markdownOutputs,
+    taskSources,
   });
   assert.equal(manifest, normalizeText(manifest));
   assert.doesNotMatch(manifest, new RegExp(OTHER_SHA));
   assert.match(manifest, new RegExp(sha256("content\n")));
   assert.equal(manifest, manifest.replace(/\r/g, ""));
+
+  const parsed = JSON.parse(manifest);
+  assert.equal(parsed.formatVersion, 2);
+  assert.deepEqual(parsed.taskSkills.mapped, Object.fromEntries(LIVE_SKILL_MAP));
+  assert.equal(
+    parsed.taskSkills.frozen["convex-setup-auth"].pinnedCommit,
+    FROZEN_UPSTREAM_COMMIT,
+  );
+  assert.equal(parsed.taskSkills.frozen["convex-setup-auth"].output, "auth.md");
+  assert.deepEqual(parsed.taskSkills.frozen["convex-setup-auth"].replacedBy, [
+    "convex-auth",
+  ]);
+  assert.equal(
+    parsed.taskSkills.frozen["convex-setup-auth"].replacementBlobs[
+      "convex-auth"
+    ],
+    OTHER_SHA.replace(/b/g, "c"),
+  );
+  assert.equal(
+    parsed.taskSkills.frozen["convex-performance-audit"].replacementBlobs[
+      "convex-advisor"
+    ],
+    null,
+  );
+  assert.equal(typeof parsed.taskSkills.excluded.convex, "string");
+  const live = parsed.sources.find((source) =>
+    source.path.includes("create-component"),
+  );
+  const frozen = parsed.sources.find((source) =>
+    source.path.includes("setup-auth"),
+  );
+  assert.equal("pinnedCommit" in live, false);
+  assert.equal(frozen.pinnedCommit, FROZEN_UPSTREAM_COMMIT);
 });
 
 test("compareOutputs separates missing, changed, and stale files", async () => {
@@ -477,12 +673,14 @@ test("replaceDirectoryAtomic rolls back when the swap fails", async () => {
 test("generate fails before writing when a later source fetch fails", async () => {
   const parent = await mkdtemp(path.join(os.tmpdir(), "convex-sync-failure-"));
   const target = path.join(parent, "references");
-  const agentPaths = requiredAgentPaths();
-  const agentTree = agentPaths.map((sourcePath, index) => ({
-    path: sourcePath,
-    type: "blob",
-    sha: `${index}`.padStart(40, "a").slice(-40),
-  }));
+  const toTree = (paths) =>
+    paths.map((sourcePath, index) => ({
+      path: sourcePath,
+      type: "blob",
+      sha: `${index}`.padStart(40, "a").slice(-40),
+    }));
+  const agentTree = toTree(headAgentPaths());
+  const frozenTree = toTree(frozenAgentPaths());
   const evalTree = [
     { path: "runner/models/guidelines.md", type: "blob", sha: OTHER_SHA },
   ];
@@ -513,12 +711,15 @@ test("generate fails before writing when a later source fetch fails", async () =
       });
     }
     if (parsed.pathname.includes("/commits/")) {
-      return response({
-        url,
-        json: {
-          sha: parsed.pathname.includes("agent-skills") ? FULL_SHA : OTHER_SHA,
-        },
-      });
+      const sha = parsed.pathname.includes(FROZEN_UPSTREAM_COMMIT)
+        ? FROZEN_UPSTREAM_COMMIT
+        : parsed.pathname.includes("agent-skills")
+          ? FULL_SHA
+          : OTHER_SHA;
+      return response({ url, json: { sha } });
+    }
+    if (parsed.pathname.includes(`agent-skills/git/trees/${FROZEN_UPSTREAM_COMMIT}`)) {
+      return response({ url, json: { truncated: false, tree: frozenTree } });
     }
     if (parsed.pathname.includes("agent-skills/git/trees")) {
       return response({ url, json: { truncated: false, tree: agentTree } });
@@ -542,6 +743,175 @@ test("generate fails before writing when a later source fetch fails", async () =
     await assert.rejects(readFile(path.join(target, "quickstart.md"), "utf8"), {
       code: "ENOENT",
     });
+  } finally {
+    await rm(parent, { recursive: true, force: true });
+  }
+});
+
+test("generate renders live and frozen sources end to end", async () => {
+  const parent = await mkdtemp(path.join(os.tmpdir(), "convex-sync-e2e-"));
+  const target = path.join(parent, "references");
+  const toTree = (paths) =>
+    paths.map((sourcePath, index) => ({
+      path: sourcePath,
+      type: "blob",
+      sha: `${index}`.padStart(40, "c").slice(-40),
+    }));
+  const agentTree = toTree(
+    headAgentPaths([
+      "skills/convex-create-component/references/local-components.md",
+    ]),
+  );
+  const frozenTree = toTree(
+    frozenAgentPaths(["skills/convex-setup-auth/references/clerk.md"]),
+  );
+  const evalTree = [
+    { path: "runner/models/guidelines.md", type: "blob", sha: OTHER_SHA },
+  ];
+  const guidelines = `# Convex guidelines\n\nThese guidelines target Convex \`^1.44.0\`.\n\n## Function guidelines\n\nSchema authentication query mutation action.\n`;
+  const rawBodies = new Map([
+    [
+      `${FULL_SHA}/skills/convex-create-component/SKILL.md`,
+      "---\nname: convex-create-component\ndescription: Components.\n---\n# Create Component\n\nLive body. See [local](references/local-components.md).\n",
+    ],
+    [
+      `${FULL_SHA}/skills/convex-create-component/references/local-components.md`,
+      "# Local Components\n\nLocal detail.\n",
+    ],
+    [
+      `${FROZEN_UPSTREAM_COMMIT}/skills/convex-quickstart/SKILL.md`,
+      "---\nname: convex-quickstart\ndescription: Quickstart.\n---\n# Quickstart\n\nFrozen quickstart body.\n",
+    ],
+    [
+      `${FROZEN_UPSTREAM_COMMIT}/skills/convex-setup-auth/SKILL.md`,
+      "---\nname: convex-setup-auth\ndescription: Auth.\n---\n# Setup Auth\n\nFrozen auth body.\n\nRun `npx convex ai-files install`.\n\nSee [Clerk](references/clerk.md).\n",
+    ],
+    [
+      `${FROZEN_UPSTREAM_COMMIT}/skills/convex-setup-auth/references/clerk.md`,
+      "# Clerk\n\nClerk detail.\n",
+    ],
+    [
+      `${FROZEN_UPSTREAM_COMMIT}/skills/convex-migration-helper/SKILL.md`,
+      "---\nname: convex-migration-helper\ndescription: Migrations.\n---\n# Migration Helper\n\nFrozen migration body.\n",
+    ],
+    [
+      `${FROZEN_UPSTREAM_COMMIT}/skills/convex-performance-audit/SKILL.md`,
+      "---\nname: convex-performance-audit\ndescription: Performance.\n---\n# Performance Audit\n\nFrozen performance body.\n",
+    ],
+    [`${OTHER_SHA}/runner/models/guidelines.md`, guidelines],
+  ]);
+
+  const fakeFetch = async (url) => {
+    const parsed = new URL(url);
+    if (parsed.hostname === "raw.githubusercontent.com") {
+      const key = parsed.pathname.replace(/^\/get-convex\/[^/]+\//, "");
+      const body = rawBodies.get(key);
+      if (!body) return response({ url, status: 404, body: "no fixture" });
+      return response({ url, body });
+    }
+    if (/\/repos\/get-convex\/agent-skills$/.test(parsed.pathname)) {
+      return response({
+        url,
+        json: {
+          default_branch: "main",
+          html_url: "https://github.com/get-convex/agent-skills",
+          license: null,
+        },
+      });
+    }
+    if (/\/repos\/get-convex\/convex-evals$/.test(parsed.pathname)) {
+      return response({
+        url,
+        json: {
+          default_branch: "main",
+          html_url: "https://github.com/get-convex/convex-evals",
+          license: { spdx_id: "Apache-2.0" },
+        },
+      });
+    }
+    if (parsed.pathname.includes("/commits/")) {
+      const sha = parsed.pathname.includes(FROZEN_UPSTREAM_COMMIT)
+        ? FROZEN_UPSTREAM_COMMIT
+        : parsed.pathname.includes("agent-skills")
+          ? FULL_SHA
+          : OTHER_SHA;
+      return response({ url, json: { sha } });
+    }
+    if (parsed.pathname.includes(`agent-skills/git/trees/${FROZEN_UPSTREAM_COMMIT}`)) {
+      return response({ url, json: { truncated: false, tree: frozenTree } });
+    }
+    if (parsed.pathname.includes("agent-skills/git/trees")) {
+      return response({ url, json: { truncated: false, tree: agentTree } });
+    }
+    if (parsed.pathname.includes("convex-evals/git/trees")) {
+      return response({ url, json: { truncated: false, tree: evalTree } });
+    }
+    throw new Error(`Unexpected fake URL ${url}`);
+  };
+
+  try {
+    const result = await generate({
+      agentSkillsSha: FULL_SHA,
+      convexEvalsSha: OTHER_SHA,
+      fetchImpl: fakeFetch,
+      referenceDir: target,
+    });
+    assert.equal(result.frozenAgentSkillsSha, FROZEN_UPSTREAM_COMMIT);
+    assert.equal(result.targetRange, "^1.44.0");
+    assert.deepEqual(
+      [...result.outputs.keys()].sort(),
+      [
+        "auth.md",
+        "components.md",
+        "guidelines.md",
+        "migrations.md",
+        "performance.md",
+        "quickstart.md",
+        "source-manifest.json",
+      ],
+    );
+
+    const components = await readFile(path.join(target, "components.md"), "utf8");
+    assert.match(components, /tree\/main\/skills\/convex-create-component>/);
+    assert.doesNotMatch(components, /Frozen on/);
+    assert.match(components, /\[local\]\(#reference-local-components\)/);
+
+    const auth = await readFile(path.join(target, "auth.md"), "utf8");
+    assert.match(
+      auth,
+      new RegExp(`tree/${FROZEN_UPSTREAM_COMMIT}/skills/convex-setup-auth>`),
+    );
+    assert.match(auth, /> Frozen on \d{4}-\d{2}-\d{2} at upstream commit/);
+    assert.doesNotMatch(auth, /npx convex ai-files install/);
+    assert.match(auth, /\[Clerk\]\(#reference-clerk\)/);
+
+    const manifest = JSON.parse(
+      await readFile(path.join(target, "source-manifest.json"), "utf8"),
+    );
+    const frozenAuth = manifest.taskSkills.frozen["convex-setup-auth"];
+    assert.equal(frozenAuth.pinnedCommit, FROZEN_UPSTREAM_COMMIT);
+    assert.match(frozenAuth.replacementBlobs["convex-auth"], /^[0-9a-f]{40}$/);
+    assert.equal(
+      manifest.sources.find((source) => source.path.endsWith("clerk.md"))
+        .pinnedCommit,
+      FROZEN_UPSTREAM_COMMIT,
+    );
+    assert.equal(
+      "pinnedCommit" in
+        manifest.sources.find((source) =>
+          source.path.endsWith("local-components.md"),
+        ),
+      false,
+    );
+
+    const second = await generate({
+      agentSkillsSha: FULL_SHA,
+      convexEvalsSha: OTHER_SHA,
+      check: true,
+      fetchImpl: fakeFetch,
+      referenceDir: target,
+    });
+    assert.deepEqual(second.diff, { missing: [], changed: [], stale: [] });
   } finally {
     await rm(parent, { recursive: true, force: true });
   }
