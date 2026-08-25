@@ -38,7 +38,7 @@ const GUIDELINES_PATH = "runner/models/guidelines.md";
 export const FROZEN_UPSTREAM_COMMIT = "ec1e6baae7d86c7843c22938c75979c016f5c6e9";
 export const FROZEN_ON = "2026-08-25";
 export const FROZEN_REASON =
-  "Upstream regenerated its catalog from the convex-agents hub on 2026-08-01 and replaced this skill with a short generated procedure that depends on hub tooling and drops the reference material bundled here.";
+  "Upstream regenerated its catalog from the convex-agents hub on 2026-08-01 and replaced this skill with a short generated procedure that drops the reference material bundled here and, in most cases, depends on hub tooling.";
 
 // Live task skills are tracked at the upstream default branch.
 export const LIVE_SKILL_MAP = new Map([
@@ -407,12 +407,19 @@ export function validateSourceShape(agentBlobs, frozenBlobs, evalBlobs) {
     }
     throw new Error(`Unmapped upstream Convex skill requires review: ${name}`);
   }
+  const namedReplacements = new Set(
+    [...FROZEN_SKILLS.values()].flatMap((config) => config.replacedBy),
+  );
   for (const name of EXCLUDED_SKILLS.keys()) {
-    if (!discovered.has(name)) {
-      console.warn(
-        `exclusion decision for ${name} no longer matches an upstream skill`,
+    if (discovered.has(name)) continue;
+    if (namedReplacements.has(name)) {
+      throw new Error(
+        `Replacement upstream Convex skill disappeared and requires review: ${name}`,
       );
     }
+    console.warn(
+      `exclusion decision for ${name} no longer matches an upstream skill`,
+    );
   }
 
   const frozenDiscovered = discoverSkills(frozenBlobs);
@@ -432,12 +439,19 @@ export function validateSourceShape(agentBlobs, frozenBlobs, evalBlobs) {
     });
   }
   for (const [folder, config] of FROZEN_SKILLS) {
+    // Replacement blob SHAs are recorded so an upstream rewrite of a
+    // replacement surfaces as a manifest change instead of passing unseen.
+    const replacementBlobs = {};
+    for (const name of config.replacedBy) {
+      replacementBlobs[name] = agentBlobs.get(`skills/${name}/SKILL.md`);
+    }
     sourcesBySkill.set(folder, {
       ...collectSkillSources(folder, frozenBlobs, config.output),
       frozen: {
         commit: FROZEN_UPSTREAM_COMMIT,
         frozenOn: FROZEN_ON,
         replacedBy: [...config.replacedBy],
+        replacementBlobs,
       },
     });
   }
@@ -668,7 +682,7 @@ function frozenNotice(frozen) {
   const replacements = frozen.replacedBy
     .map((name) => `\`${name}\``)
     .join(" and ");
-  return `> Frozen on ${frozen.frozenOn} at upstream commit ${frozen.commit}, the last revision that published this skill. Upstream replaced it with the generated ${replacements} procedure, which depends on convex-agents hub tooling and drops the material bundled here. The source manifest records this freeze.`;
+  return `> Frozen on ${frozen.frozenOn} at upstream commit ${frozen.commit}, the last revision that published this skill. Upstream replaced it with the short generated ${replacements} procedure, which drops the reference material bundled here. The source manifest records this freeze.`;
 }
 
 function provenanceHeader(title, sourceUrl, frozen = null) {
@@ -758,14 +772,21 @@ function repositoryManifest(snapshot) {
   };
 }
 
-function frozenManifest() {
+function frozenManifest(taskSources) {
   const frozen = {};
   for (const [folder, config] of FROZEN_SKILLS) {
+    const replacementBlobs = taskSources.get(folder)?.frozen?.replacementBlobs;
     frozen[folder] = {
       output: config.output,
       pinnedCommit: FROZEN_UPSTREAM_COMMIT,
       frozenOn: FROZEN_ON,
       replacedBy: [...config.replacedBy],
+      replacementBlobs: Object.fromEntries(
+        config.replacedBy.map((name) => [
+          name,
+          replacementBlobs?.[name] ?? null,
+        ]),
+      ),
       reason: FROZEN_REASON,
     };
   }
@@ -779,6 +800,7 @@ export function buildManifest({
   consumedSources,
   outputSources,
   markdownOutputs,
+  taskSources = new Map(),
 }) {
   const sources = [...consumedSources]
     .sort((a, b) => a.path.localeCompare(b.path))
@@ -809,7 +831,7 @@ export function buildManifest({
         ].sort((a, b) => a.name.localeCompare(b.name)),
         taskSkills: {
           mapped: Object.fromEntries(LIVE_SKILL_MAP),
-          frozen: frozenManifest(),
+          frozen: frozenManifest(taskSources),
           excluded: Object.fromEntries(
             [...EXCLUDED_SKILLS].sort(([a], [b]) => a.localeCompare(b)),
           ),
@@ -1088,6 +1110,7 @@ export async function generate({
     consumedSources,
     outputSources,
     markdownOutputs,
+    taskSources: sourceMap,
   });
   const outputs = new Map(markdownOutputs);
   outputs.set("source-manifest.json", manifestBody);

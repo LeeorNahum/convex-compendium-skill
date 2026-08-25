@@ -34,7 +34,10 @@
         "replacedBy": [
           "convex-quickstart"
         ],
-        "reason": "Upstream regenerated its catalog from the convex-agents hub on 2026-08-01 and replaced this skill with a short generated procedure that depends on hub tooling and drops the reference material bundled here."
+        "replacementBlobs": {
+          "convex-quickstart": "403c608de34dd119edaf387dac72cc5ba55375b5"
+        },
+        "reason": "Upstream regenerated its catalog from the convex-agents hub on 2026-08-01 and replaced this skill with a short generated procedure that drops the reference material bundled here and, in most cases, depends on hub tooling."
       },
       "convex-setup-auth": {
         "output": "auth.md",
@@ -43,7 +46,10 @@
         "replacedBy": [
           "convex-auth"
         ],
-        "reason": "Upstream regenerated its catalog from the convex-agents hub on 2026-08-01 and replaced this skill with a short generated procedure that depends on hub tooling and drops the reference material bundled here."
+        "replacementBlobs": {
+          "convex-auth": "9e7a95a252335d1cc11c49c715735e8529d90bcb"
+        },
+        "reason": "Upstream regenerated its catalog from the convex-agents hub on 2026-08-01 and replaced this skill with a short generated procedure that drops the reference material bundled here and, in most cases, depends on hub tooling."
       },
       "convex-migration-helper": {
         "output": "migrations.md",
@@ -52,7 +58,10 @@
         "replacedBy": [
           "convex-migrate"
         ],
-        "reason": "Upstream regenerated its catalog from the convex-agents hub on 2026-08-01 and replaced this skill with a short generated procedure that depends on hub tooling and drops the reference material bundled here."
+        "replacementBlobs": {
+          "convex-migrate": "d2ea8f3f791d308494f2084132cc2390847cc5a4"
+        },
+        "reason": "Upstream regenerated its catalog from the convex-agents hub on 2026-08-01 and replaced this skill with a short generated procedure that drops the reference material bundled here and, in most cases, depends on hub tooling."
       },
       "convex-performance-audit": {
         "output": "performance.md",
@@ -62,7 +71,11 @@
           "convex-optimize",
           "convex-advisor"
         ],
-        "reason": "Upstream regenerated its catalog from the convex-agents hub on 2026-08-01 and replaced this skill with a short generated procedure that depends on hub tooling and drops the reference material bundled here."
+        "replacementBlobs": {
+          "convex-optimize": "f1aab6e40a0b70cf4859bd000d650671417b3f61",
+          "convex-advisor": "765528b1ed77f92d69a94400fbe88f938f2423e9"
+        },
+        "reason": "Upstream regenerated its catalog from the convex-agents hub on 2026-08-01 and replaced this skill with a short generated procedure that drops the reference material bundled here and, in most cases, depends on hub tooling."
       }
     },
     "excluded": {
@@ -243,7 +256,7 @@
   "outputs": [
     {
       "path": "references/auth.md",
-      "sha256": "0887b54b2228bc5bf624ca35cf8eb3a3cba56271fca7340f0a65e7d92c5b8a23",
+      "sha256": "d7b27d671323875539988ca6c834c03a46a8282f519c78413dc04ec42b57601e",
       "sources": [
         "skills/convex-setup-auth/SKILL.md",
         "skills/convex-setup-auth/references/auth0.md",
@@ -272,7 +285,7 @@
     },
     {
       "path": "references/migrations.md",
-      "sha256": "08ce6e6fc4fd4326e55ef53ace8d64eca485539c747fb5411ced901f20ad189d",
+      "sha256": "3f4a78f85f71eed70571fb0277945c07a54ede8851a4a312b6cf511d03627dd2",
       "sources": [
         "skills/convex-migration-helper/SKILL.md",
         "skills/convex-migration-helper/references/migration-patterns.md",
@@ -281,7 +294,7 @@
     },
     {
       "path": "references/performance.md",
-      "sha256": "f9c6adbabb390212fd675f8aa0f37ef23275e9635856abf8ce21a67da4d9e600",
+      "sha256": "2a7ccfecf34266e76c7415b1724ca90c6d064ae389214e1cc9a010ae4a83a7e0",
       "sources": [
         "skills/convex-performance-audit/SKILL.md",
         "skills/convex-performance-audit/references/function-budget.md",
@@ -292,7 +305,7 @@
     },
     {
       "path": "references/quickstart.md",
-      "sha256": "1f9fdeae7270077dc1a64f2e0a6b2c54fbfce31149ffbd8fd8d5df1309aff2ba",
+      "sha256": "de3166330bd39648ca16c47890ef21e808703a3b2f8cae7dcba367ae220c8050",
       "sources": [
         "skills/convex-quickstart/SKILL.md"
       ]
