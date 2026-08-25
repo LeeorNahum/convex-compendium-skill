@@ -477,7 +477,7 @@ test("fetchValidated rejects an unexpected redirect host", async () => {
   );
 });
 
-test("buildManifest is stable and records only the pinned commit SHA", () => {
+test("buildManifest is stable and records the frozen pin but no moving commit SHA", () => {
   const markdownOutputs = new Map([
     ["components.md", "content\n"],
     ["auth.md", "frozen content\n"],
